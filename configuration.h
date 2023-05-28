@@ -2,7 +2,7 @@
 #define CONFIGURATION_H
 
 #define PRU_BASEFREQ    	40000           // PRU Base thread ISR update frequency (hz)
-#define PRU_SERVOFREQ       1000            // PRU Servo thread ISR update freqency (hz)
+#define PRU_SERVOFREQ       200            // PRU Servo thread ISR update freqency (hz)
 
 #define BASE_SLICE          0               // RP2040 PWM Slice used by the Base thread
 #define SERVO_SLICE         1               // RP2040 PWM Slice used by the Servo thread
@@ -22,9 +22,8 @@
 #define PRU_ACKNOWLEDGE		0x61636b6e	    // "ackn" payload
 #define PRU_ERR		        0x6572726f	    // "erro" payload
 
-#define LOOP_TIME           0.1
 #define DATA_ERR_MAX         5
-// PRU reset will occur in DATA_ERR_MAX * LOOP_TIME = 0.5sec
+
 
 // Data buffer configuration
 #define BUFFER_SIZE 		68            	// Size of recieve buffer - same as HAL component, 64

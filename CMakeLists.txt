@@ -66,6 +66,7 @@ add_executable(remora
         ${CMAKE_SOURCE_DIR}/drivers/pin/pin.cpp
         ${CMAKE_SOURCE_DIR}/modules/module.cpp
         ${CMAKE_SOURCE_DIR}/modules/moduleInterrupt.cpp
+        ${CMAKE_SOURCE_DIR}/modules/comms/RemoraComms.cpp
         ${CMAKE_SOURCE_DIR}/modules/debug/debug.cpp
         ${CMAKE_SOURCE_DIR}/modules/blink/blink.cpp
         ${CMAKE_SOURCE_DIR}/modules/stepgen/stepgen.cpp

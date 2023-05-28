@@ -69,6 +69,7 @@ extern "C"
 // modules
 #include "modules/module.h"
 #include "modules/blink/blink.h"
+#include "modules/comms/RemoraComms.h"
 #include "modules/debug/debug.h"
 #include "modules/stepgen/stepgen.h"
 
@@ -98,8 +99,6 @@ uint32_t servo_freq = PRU_SERVOFREQ;
 volatile bool PRUreset;
 bool configError = false;
 bool threadsRunning = false;
-volatile bool cmdReceived = false;
-volatile bool commsStatus = false;
 bool staticConfig;
 
 uint8_t noDataCount;
@@ -107,6 +106,7 @@ uint8_t noDataCount;
 // pointers to objects with global scope
 pruThread* servoThread;
 pruThread* baseThread;
+RemoraComms* comms;
 
 // unions for RX and TX data
 rxData_t rxBuffer;
@@ -319,6 +319,11 @@ void loadStaticConfig()
     printf("\n4. Loading static configuration\n");
 
     // Servo thread modules
+    
+    // Ethernet communication monitoring
+	comms = new RemoraComms();
+	servoThread->registerModule(comms);
+
     loadStaticBlink();
 
     // Base thread modules
@@ -331,9 +336,8 @@ void loadModules()
     printf("\n4. Loading modules\n");
 
 	// Ethernet communication monitoring
-    // TODO - add comms module
-	//comms = new RemoraComms();
-	//servoThread->registerModule(comms);
+	comms = new RemoraComms();
+	servoThread->registerModule(comms);
 
     if (configError) return;
 
@@ -380,10 +384,10 @@ void debugThreadHigh()
 {
     printf("\n  Thread debugging.... \n\n");
 
-    Module* debugOnB = new Debug("GP02", 1);
+    Module* debugOnB = new Debug("GP14", 1);
     baseThread->registerModule(debugOnB);
 
-    Module* debugOnS = new Debug("GP03", 1);
+    Module* debugOnS = new Debug("GP15", 1);
     servoThread->registerModule(debugOnS);
 }
 
@@ -392,10 +396,10 @@ void debugThreadLow()
 {
     printf("\n  Thread debugging.... \n\n");
 
-    Module* debugOffB = new Debug("GP02", 0);
+    Module* debugOffB = new Debug("GP14", 0);
     baseThread->registerModule(debugOffB);
 
-    Module* debugOffS = new Debug("GP03", 0);
+    Module* debugOffS = new Debug("GP15", 0);
     servoThread->registerModule(debugOffS);
 }
 
@@ -472,13 +476,12 @@ void core1_entry()
                 prevState = currentState;
 
                 //wait for data before changing to running state
-                /*
+                
                 if (comms->getStatus())
                 {
                     currentState = ST_RUNNING;
                 }
-                */
-
+                
                 break;
 
             case ST_RUNNING:
@@ -488,12 +491,12 @@ void core1_entry()
                     printf("\n## Entering RUNNING state\n");
                 }
                 prevState = currentState;
-                /*
+                
                 if (comms->getStatus() == false)
                 {
                     currentState = ST_RESET;
                 }
-                */
+                
                 break;
 
             case ST_STOP:
@@ -693,13 +696,13 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	{
 		txData.header = PRU_DATA;
 		txlen = BUFFER_SIZE;
-		cmdReceived = true;
+		comms->dataReceived();
 	}
 	else if (rxBuffer.header == PRU_WRITE)
 	{
 		txData.header = PRU_ACKNOWLEDGE;
 		txlen = sizeof(txData.header);
-		cmdReceived = true;
+		comms->dataReceived();
 
 		// ensure an atomic access to the rxBuffer
         // wait for the threads not to be executing
