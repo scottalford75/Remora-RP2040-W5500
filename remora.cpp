@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <cstring>
 #include "pico/stdlib.h"
+#include "pico/multicore.h"
 #include "pico/binary_info.h"
 #include "pico/critical_section.h"
 #include "hardware/spi.h"
@@ -249,6 +250,8 @@ void jsonFromFlash(std::string json)
 
 void deserialiseJSON()
 {
+    if(staticConfig) return;
+
     printf("\n2. Parsing JSON configuration file\n");
 
     const char *json = strJson.c_str();
@@ -375,6 +378,8 @@ void loadModules()
 
 void debugThreadHigh()
 {
+    printf("\n  Thread debugging.... \n\n");
+
     Module* debugOnB = new Debug("GP02", 1);
     baseThread->registerModule(debugOnB);
 
@@ -382,8 +387,11 @@ void debugThreadHigh()
     servoThread->registerModule(debugOnS);
 }
 
+
 void debugThreadLow()
 {
+    printf("\n  Thread debugging.... \n\n");
+
     Module* debugOffB = new Debug("GP02", 0);
     baseThread->registerModule(debugOffB);
 
@@ -392,33 +400,15 @@ void debugThreadLow()
 }
 
 
-int main()
+void core1_entry()
 {
-    // Network configuration
-    //IP4_ADDR(&g_ip, 169, 254, 250, 35);
-    //IP4_ADDR(&g_mask, 255, 255, 0, 0);
-    //IP4_ADDR(&g_gateway, 169, 254, 250, 34);
-
-    IP4_ADDR(&g_ip, 10, 10, 10, 10);
-    IP4_ADDR(&g_mask, 255, 255, 255, 0);
-    IP4_ADDR(&g_gateway, 10, 10, 10, 1);
-
-    set_clock_khz();
-
-    // Initialize stdio after the clock change
-    stdio_init_all();
-
-    sleep_ms(1000 * 3); // wait for 3 seconds
-
     enum State currentState;
     enum State prevState;
 
     currentState = ST_SETUP;
     prevState = ST_RESET;
 
-    printf("\nRemora for RP2040 starting...\n\r");
-
-    EthernetInit();
+    printf("\nRemora for RP2040 starting (core1)...\n\r");
 
     while (1)
     {
@@ -445,8 +435,6 @@ int main()
                     loadModules();
                 }
                 debugThreadLow();
-                udpServerInit();
-                IAP_tftpd_init();
 
                 currentState = ST_START;
                 break;
@@ -546,22 +534,38 @@ int main()
                 // force a reset
                 break;
 	    }
+    }
 
+}
+
+
+int main()
+{
+    // Network configuration
+    IP4_ADDR(&g_ip, 10, 10, 10, 10);
+    IP4_ADDR(&g_mask, 255, 255, 255, 0);
+    IP4_ADDR(&g_gateway, 10, 10, 10, 1);
+
+    set_clock_khz();
+
+    // Initialize stdio after the clock change
+    stdio_init_all();
+
+    sleep_ms(1000 * 3); // wait for 3 seconds
+
+    printf("\nRemora for RP2040 starting (core0)...\n\n\r");
+
+    EthernetInit();
+    udpServerInit();
+    IAP_tftpd_init();
+
+    // launch main Remora code on the second core
+    multicore_launch_core1(core1_entry);
+
+    while (1)
+    {
         EthernetTasks();
         sys_check_timeouts();
-
-        if (newJson)
-        {
-            printf("\n\nChecking new configuration file\n");
-            if (checkJson() > 0)
-            {
-                printf("Moving new config file to Flash storage\n");
-                //moveJson();
-
-                // force a reset to load new JSON configuration
-                //HAL_NVIC_SystemReset();
-            }
-        }
     }
 }
 
@@ -698,8 +702,8 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 		cmdReceived = true;
 
 		// ensure an atomic access to the rxBuffer
-		// disable thread interrupts
-		status = save_and_disable_interrupts();
+        // wait for the threads not to be executing
+        while (baseThread->semaphore || servoThread->semaphore){}
 
 		// then move the data
 		for (int i = 0; i < BUFFER_SIZE; i++)
@@ -707,8 +711,6 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 			rxData.rxBuffer[i] = rxBuffer.rxBuffer[i];
 		}
 
-		// re-enable thread interrupts
-		restore_interrupts(status);
 	}
 
 	// allocate pbuf from RAM

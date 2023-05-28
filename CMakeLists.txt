@@ -80,6 +80,7 @@ target_include_directories(remora PUBLIC
 
 target_link_libraries(remora 
         pico_stdlib
+        pico_multicore
         hardware_spi
         hardware_dma
         hardware_pwm
