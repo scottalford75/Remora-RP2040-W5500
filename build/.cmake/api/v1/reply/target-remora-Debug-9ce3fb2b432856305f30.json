@@ -76,7 +76,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 96,
+				"line" : 97,
 				"parent" : 0
 			},
 			{
@@ -188,6 +188,10 @@
 				{
 					"backtrace" : 2,
 					"define" : "LIB_PICO_MEM_OPS_PICO=1"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "LIB_PICO_MULTICORE=1"
 				},
 				{
 					"backtrace" : 2,
@@ -455,6 +459,10 @@
 				{
 					"backtrace" : 2,
 					"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/boot_stage2/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/pico_multicore/include"
 				},
 				{
 					"backtrace" : 2,
@@ -610,6 +618,10 @@
 				},
 				{
 					"backtrace" : 2,
+					"define" : "LIB_PICO_MULTICORE=1"
+				},
+				{
+					"backtrace" : 2,
 					"define" : "LIB_PICO_PLATFORM=1"
 				},
 				{
@@ -874,6 +886,10 @@
 				{
 					"backtrace" : 2,
 					"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/boot_stage2/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/pico_multicore/include"
 				},
 				{
 					"backtrace" : 2,
@@ -1069,7 +1085,8 @@
 				152,
 				153,
 				154,
-				155
+				155,
+				156
 			]
 		},
 		{
@@ -1140,6 +1157,10 @@
 				{
 					"backtrace" : 2,
 					"define" : "LIB_PICO_MEM_OPS_PICO=1"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "LIB_PICO_MULTICORE=1"
 				},
 				{
 					"backtrace" : 2,
@@ -1410,6 +1431,10 @@
 				},
 				{
 					"backtrace" : 2,
+					"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/pico_multicore/include"
+				},
+				{
+					"backtrace" : 2,
 					"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/hardware_spi/include"
 				},
 				{
@@ -1486,15 +1511,15 @@
 		},
 		{
 			"backtrace" : 2,
-			"id" : "IOLIBRARY_FILES::@5a6e59fc4828463ce5ae"
-		},
-		{
-			"backtrace" : 2,
 			"id" : "ETHERNET_FILES::@56099a33689f37a39260"
 		},
 		{
 			"backtrace" : 2,
 			"id" : "LWIP_FILES::@5a6e59fc4828463ce5ae"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "IOLIBRARY_FILES::@5a6e59fc4828463ce5ae"
 		}
 	],
 	"id" : "remora::@6890427a1f51a3e7e1df",
@@ -2525,7 +2550,8 @@
 				152,
 				153,
 				154,
-				155
+				155,
+				156
 			]
 		},
 		{
@@ -2894,6 +2920,12 @@
 			"backtrace" : 2,
 			"compileGroupIndex" : 1,
 			"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/pico_stdio_uart/stdio_uart.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 1,
+			"path" : "C:/Program Files/Raspberry Pi/Pico SDK v1.5.0/pico-sdk/src/rp2_common/pico_multicore/multicore.c",
 			"sourceGroupIndex" : 0
 		},
 		{

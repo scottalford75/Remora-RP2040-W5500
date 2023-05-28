@@ -28,6 +28,8 @@ class pruThread
 
 	public:
 
+		bool				semaphore;
+
 		pruThread(uint8_t slice, uint32_t frequency);
 
 		void registerModule(Module *module);

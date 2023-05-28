@@ -12,6 +12,8 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 	frequency(frequency)
 {
 	printf("Creating thread %d\n", this->frequency);
+
+	this->semaphore = false;
 }
 
 void pruThread::startThread(void)
@@ -40,6 +42,8 @@ void pruThread::registerModulePost(Module* module)
 
 void pruThread::run(void)
 {
+	this->semaphore = true;
+
 	// iterate over the Thread pointer vector to run all instances of Module::runModule()
 	for (iter = vThread.begin(); iter != vThread.end(); ++iter) (*iter)->runModule();
 
@@ -48,4 +52,6 @@ void pruThread::run(void)
 	{
 		for (iter = vThreadPost.begin(); iter != vThreadPost.end(); ++iter) (*iter)->runModulePost();
 	}
+
+	this->semaphore = false;
 }
