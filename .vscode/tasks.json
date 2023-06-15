@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flash",
+      "type": "shell",
+      "command": "openocd",
+      "args": [
+        "-f",
+        "interface/cmsis-dap.cfg",
+        "-f",
+        "target/rp2040.cfg",
+        "-c",
+        "adapter speed 1000; program {${command:cmake.launchTargetPath}} verify reset exit"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Build",
+      "type": "cmake",
+      "command": "build",
+      "problemMatcher": "$gcc",
+      "group": "build"
+    },
+    {
+      "type": "cppbuild",
+      "label": "C/C++: arm-none-eabi-gcc.exe build active file",
+      "command": "C:\\Program Files\\Raspberry Pi\\Pico SDK v1.5.0/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe",
+      "args": [
+        "-fdiagnostics-color=always",
+        "-g",
+        "${file}",
+        "-o",
+        "${fileDirname}\\${fileBasenameNoExtension}.exe"
+      ],
+      "options": {
+        "cwd": "C:\\Program Files\\Raspberry Pi\\Pico SDK v1.5.0/gcc-arm-none-eabi/bin"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "compiler: \"C:\\Program Files\\Raspberry Pi\\Pico SDK v1.5.0/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe\""
+    }
+  ]
+}

@@ -11,8 +11,6 @@
 #define INPUT 0x0
 #define OUTPUT 0x1
 
-#define NONE        0b000
-#define OPENDRAIN   0b001
 #define PULLUP      0b010
 #define PULLDOWN    0b011
 #define PULLNONE    0b100
@@ -23,12 +21,19 @@ class Pin
 
         std::string         portAndPin;
         uint8_t             dir;
+        uint8_t             modifier;
         uint16_t            pinNumber;
         uint16_t            pin;
+        uint32_t            mode;
+        bool                pullup;
+        bool                pulldown;
 
     public:
 
         Pin(std::string, int);
+        Pin(std::string, int, int);
+
+        void configPin();
 
         inline bool get()
         {

@@ -1,5 +1,5 @@
 #include "stepgen.h"
-#include "../boardconfig.h"
+//#include "../boardconfig.h"
 
 
 /***********************************************************************
@@ -33,16 +33,7 @@ void createStepgen()
 
 void loadStaticStepgen()
 {
-    for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
-        printf("\nCreate step generator for Joint %d\n", i);
-        ptrJointFreqCmd[i] = &rxData.jointFreqCmd[i];
-        ptrJointFeedback[i] = &txData.jointFeedback[i];
-        ptrJointEnable = &rxData.jointEnable;
- 
-        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT, *ptrJointFreqCmd[i], *ptrJointFeedback[i], *ptrJointEnable);
-        baseThread->registerModule(stepgen);
-        baseThread->registerModulePost(stepgen);
-    }
+
 }
 
 

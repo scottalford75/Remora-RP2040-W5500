@@ -21,6 +21,7 @@
 #include "tftpserver.h"
 #include "hardware/sync.h"
 #include "hardware/flash.h"
+#include "pico/multicore.h"
 #include <string.h>
 #include <stdio.h>
 #include "configuration.h"
@@ -158,8 +159,8 @@ static err_t IAP_tftp_send_ack_packet(struct udp_pcb *upcb, const ip_addr_t *to,
 static void IAP_wrq_recv_callback(void *_args, struct udp_pcb *upcb, struct pbuf *pkt_buf, const ip_addr_t *addr, u16_t port)
 {
   tftp_connection_args *args = (tftp_connection_args *)_args;
-  uint8_t data_buffer[512]; // the size of a TFTP block
-  uint16_t count=0;
+  uint8_t data_buffer[512] = {0}; // the size of a TFTP block, needs to be initalised with "0" for flash write to work on a partial block
+  //uint16_t count=0;
 
   if (pkt_buf->len != pkt_buf->tot_len)
   {
@@ -176,14 +177,13 @@ static void IAP_wrq_recv_callback(void *_args, struct udp_pcb *upcb, struct pbuf
 
     total_count += pkt_buf->len - TFTP_DATA_PKT_HDR_LEN;
 
-    count = (pkt_buf->len - TFTP_DATA_PKT_HDR_LEN)/4;
-    if (((pkt_buf->len - TFTP_DATA_PKT_HDR_LEN)%4)!=0)
-    count++;
-
+    // Write received data in flash
     uint32_t status = save_and_disable_interrupts();
     flash_range_program(Flash_Write_Address, data_buffer, 512);
-    restore_interrupts(status);
-   
+    restore_interrupts(status); 
+
+    // Increment the write address
+    Flash_Write_Address = Flash_Write_Address + 512;
 
     /* update our block number to match the block number just received */
     args->block++;
@@ -212,7 +212,7 @@ static void IAP_wrq_recv_callback(void *_args, struct udp_pcb *upcb, struct pbuf
     IAP_tftp_cleanup_wr(upcb, args);
     pbuf_free(pkt_buf);
     newJson = true;
-    printf("\nWe have new json file!!!\n\n");
+    printf("\nWe have new JSON file!!!\n\n");
   }
   else
   {
@@ -252,6 +252,9 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
   udp_recv(upcb, IAP_wrq_recv_callback, args);
 
   total_count =0;
+
+  // stop core0 code execution
+  multicore_reset_core1();
 
   uint32_t status = save_and_disable_interrupts();
   flash_range_erase(JSON_UPLOAD_ADDRESS, (32/4) * FLASH_SECTOR_SIZE);

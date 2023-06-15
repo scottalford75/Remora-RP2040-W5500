@@ -16,6 +16,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+
+
 #include <stdio.h>
 #include <cstring>
 #include "pico/stdlib.h"
@@ -28,10 +30,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
 #include "hardware/flash.h"
+#include "hardware/watchdog.h"
 
 #include "configuration.h"
 #include "remora.h"
 #include "boardconfig.h"
+
+#include "crc32.h"
 
 // WIZnet
 extern "C"
@@ -72,8 +77,7 @@ extern "C"
 #include "modules/comms/RemoraComms.h"
 #include "modules/debug/debug.h"
 #include "modules/stepgen/stepgen.h"
-
-
+#include "modules/digitalPin/digitalPin.h"
 
 
 /***********************************************************************
@@ -99,7 +103,7 @@ uint32_t servo_freq = PRU_SERVOFREQ;
 volatile bool PRUreset;
 bool configError = false;
 bool threadsRunning = false;
-bool staticConfig;
+bool staticConfig = false;
 
 uint8_t noDataCount;
 
@@ -113,7 +117,6 @@ rxData_t rxBuffer;
 volatile rxData_t rxData;
 volatile txData_t txData;
 
-
 // pointers to data
 volatile rxData_t*  ptrRxData = &rxData;
 volatile txData_t*  ptrTxData = &txData;
@@ -124,8 +127,8 @@ volatile int32_t* ptrJointFeedback[JOINTS];
 volatile uint8_t* ptrJointEnable;
 volatile float*   ptrSetPoint[VARIABLES];
 volatile float*   ptrProcessVariable[VARIABLES];
-volatile uint16_t* ptrInputs;
-volatile uint16_t* ptrOutputs;
+volatile uint32_t* ptrInputs;
+volatile uint32_t* ptrOutputs;
 
 
 // Json config file stuff
@@ -150,14 +153,11 @@ JsonObject thread;
 JsonObject module;
 
 
-
-
 static void set_clock_khz(void);
 void EthernetInit();
 void udpServerInit();
 void EthernetTasks();
 void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
-
 
 
 /* Network */
@@ -181,6 +181,10 @@ int8_t checkJson()
 	metadata_t* meta = (metadata_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS);
 	uint32_t* json = (uint32_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS + METADATA_LEN);
 
+    uint32_t table[256];
+    crc32::generate_table(table);
+    int mod, padding;
+
 	// Check length is reasonable
 	if (meta->length > (32/4) * FLASH_SECTOR_SIZE)
 	{
@@ -189,15 +193,29 @@ int8_t checkJson()
 		return -1;
 	}
 
+    // for compatability with STM32 hardware CRC32, the config is padded to a 32 byte boundary
+    mod = meta->jsonLength % 4;
+    if (mod > 0)
+    {
+        padding = 4 - mod;
+    }
+    else
+    {
+        padding = 0;
+    }
+    printf("mod = %d, padding = %d\n", mod, padding);
 
 	// Compute CRC
-
+    char* ptr = (char *)(XIP_BASE + JSON_UPLOAD_ADDRESS + METADATA_LEN);
+    for (int i = 0; i < meta->jsonLength + padding; i++)
+    {
+        crc32 = crc32::update(table, crc32, ptr, 1);
+        ptr++;
+    }
 
 	printf("Length (words) = %d\n", meta->length);
 	printf("JSON length (bytes) = %d\n", meta->jsonLength);
 	printf("crc32 = %x\n", crc32);
-
-
 
 	// Check CRC
 	if (crc32 != meta->crc32)
@@ -211,6 +229,48 @@ int8_t checkJson()
 	newJson = false;
 	printf("JSON Config file received Ok\n");
 	return 1;
+}
+
+
+void moveJson()
+{
+	uint8_t pages;
+    uint32_t i = 0;
+	metadata_t* meta = (metadata_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS);;
+
+	uint16_t jsonLength = meta->jsonLength;
+
+	// erase the old JSON config file
+    uint32_t status = save_and_disable_interrupts();
+    flash_range_erase(JSON_STORAGE_ADDRESS, (32/4) * FLASH_SECTOR_SIZE);
+    restore_interrupts(status);
+
+    // how many pages are needed to be written. The first 4 bytes of the storage location will contain the length of the JSON file
+    pages = (meta->jsonLength + 4) / FLASH_PAGE_SIZE;
+    if ((meta->jsonLength + 4) / FLASH_PAGE_SIZE > 0)
+    {
+        pages++;
+    }
+
+    printf("pages = %d\n", pages);
+	
+    uint8_t data[pages * 256] = {0};
+
+	// store the length of the file in the 0th word
+    data[0] = (uint8_t)((jsonLength & 0x00FF));
+    data[1] = (uint8_t)((jsonLength & 0xFF00) >> 8);
+    
+    //The buffer argument points to the data to be written, which is of size size. 
+    //This size must be a multiple of the "page size", which is defined as the constant FLASH_PAGE_SIZE, with a value of 256 bytes.
+
+    for (i = 0; i < jsonLength; i++)
+    {
+        data[i + 4] = *((uint8_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS + METADATA_LEN + i));
+    }
+
+    status = save_and_disable_interrupts();
+    flash_range_program(JSON_STORAGE_ADDRESS, data, (pages * 256));
+    restore_interrupts(status); 
 }
 
 
@@ -228,9 +288,19 @@ void jsonFromFlash(std::string json)
     if (jsonLength == 0xFFFFFFFF)
     {
     	printf("Flash storage location is empty - no config file\n");
-    	printf("Using static configuration\n\n");
+    	printf("Using default configuration\n\n");
 
-        staticConfig = true;
+        //staticConfig = true;
+
+        jsonLength = sizeof(defaultConfig);
+
+    	json.resize(jsonLength);
+
+		for (i = 0; i < jsonLength; i++)
+		{
+			c = defaultConfig[i];
+			strJson.push_back(c);
+		}
     }
     else
     {
@@ -324,10 +394,44 @@ void loadStaticConfig()
 	comms = new RemoraComms();
 	servoThread->registerModule(comms);
 
-    loadStaticBlink();
+    //loadStaticBlink();
+	for (int i = 0; i < sizeof(BlinkConfigs)/sizeof(*BlinkConfigs); i++) {
+        printf("\nMake Blink at pin %s\n", BlinkConfigs[i].Comment, BlinkConfigs[i].Pin, BlinkConfigs[i].Freq);
+        Module* blink = new Blink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
+        servoThread->registerModule(blink);
+    }
+
+    //loadStaticIO();
+
+    ptrInputs = &txData.inputs;
+    ptrOutputs = &rxData.outputs;
+ 
+    //Digital Outputs
+    for (int i = 0; i < sizeof(DOConfigs)/sizeof(*DOConfigs); i++) {
+        printf("\nCreate digital output for %s\n", DOConfigs[i].Comment);
+        Module* digitalOutput = new DigitalPin(*ptrOutputs, 1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
+        servoThread->registerModule(digitalOutput);
+    }
+  
+    //Digital Inputs
+    for (int i = 0; i < sizeof(DIConfigs)/sizeof(*DIConfigs); i++) {
+        printf("\nCreate digital input for %s\n", DIConfigs[i].Comment);
+        Module* digitalInput = new DigitalPin(*ptrInputs, 0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
+        servoThread->registerModule(digitalInput);
+    }
 
     // Base thread modules
-    loadStaticStepgen();
+    //loadStaticStepgen();
+    for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
+        printf("\nCreate step generator for Joint %d\n", i);
+        ptrJointFreqCmd[i] = &rxData.jointFreqCmd[i];
+        ptrJointFeedback[i] = &txData.jointFeedback[i];
+        ptrJointEnable = &rxData.jointEnable;
+ 
+        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT, *ptrJointFreqCmd[i], *ptrJointFeedback[i], *ptrJointEnable);
+        baseThread->registerModule(stepgen);
+        baseThread->registerModulePost(stepgen);
+    }
 }
 
 
@@ -357,7 +461,7 @@ void loadModules()
 
             if (!strcmp(type,"Stepgen"))
             {
-                //createStepgen();
+                createStepgen();
             }
          }
         else if (!strcmp(thread,"Servo"))
@@ -368,7 +472,7 @@ void loadModules()
 			}
         	else if (!strcmp(type,"Digital Pin"))
 			{
-				//createDigitalPin();
+				createDigitalPin();
 			}
         	else if (!strcmp(type,"Spindle PWM"))
 			{
@@ -569,6 +673,23 @@ int main()
     {
         EthernetTasks();
         sys_check_timeouts();
+
+        if (newJson)
+        {
+            printf("\n\nChecking new configuration file\n");
+            if (checkJson() > 0)
+            {
+            printf("Moving new config file to Flash storage\n");
+            moveJson();
+
+            // force a reset to load new JSON configuration
+            printf("Forceing a reboot now....\n");
+            watchdog_reboot(0, SRAM_END, 0);
+            for (;;) {
+                __wfi();
+            }
+            }
+        }
     }
 }
 

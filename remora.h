@@ -16,7 +16,7 @@ typedef union
     volatile int32_t jointFreqCmd[JOINTS]; 	// Base thread commands ?? - basically motion
     float setPoint[VARIABLES];		  // Servo thread commands ?? - temperature SP, PWM etc
     uint8_t jointEnable;
-    uint32_t outputs;
+    volatile uint32_t outputs;
     uint8_t spare0;
   };
 } rxData_t;

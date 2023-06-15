@@ -1,5 +1,5 @@
 #include "blink.h"
-#include "../boardconfig.h"
+//#include "../boardconfig.h"
 
 /***********************************************************************
                 MODULE CONFIGURATION AND CREATION FROM JSON     
@@ -24,11 +24,7 @@ void createBlink()
 
 void loadStaticBlink()
 {
-	    for (int i = 0; i < sizeof(BlinkConfigs)/sizeof(*BlinkConfigs); i++) {
-        printf("\nMake Blink at pin %s\n", BlinkConfigs[i].Comment, BlinkConfigs[i].Pin, BlinkConfigs[i].Freq);
-        Module* blink = new Blink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
-        servoThread->registerModule(blink);
-    }
+
 }
 
 /***********************************************************************

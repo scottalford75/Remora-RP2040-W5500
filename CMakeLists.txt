@@ -7,7 +7,9 @@ include(pico_sdk_import.cmake)
 project(Remora-RP2040-W5500)
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
+
+#set(PICO_DEOPTIMIZED_DEBUG 1)
 
 # Initialize the SDK
 pico_sdk_init()
@@ -58,7 +60,7 @@ include_directories(
 add_executable(remora 
         remora.cpp
         tftpserver.cpp
-        boardconfig.cpp
+        #boardconfig.cpp
         ${CMAKE_SOURCE_DIR}/interrupt/interrupt.cpp
         ${CMAKE_SOURCE_DIR}/thread/timerinterrupt.cpp
         ${CMAKE_SOURCE_DIR}/thread/timer.cpp
@@ -70,6 +72,7 @@ add_executable(remora
         ${CMAKE_SOURCE_DIR}/modules/debug/debug.cpp
         ${CMAKE_SOURCE_DIR}/modules/blink/blink.cpp
         ${CMAKE_SOURCE_DIR}/modules/stepgen/stepgen.cpp
+        ${CMAKE_SOURCE_DIR}/modules/digitalPin/digitalPin.cpp
         )
 
 
