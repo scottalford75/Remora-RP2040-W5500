@@ -434,3 +434,10 @@
 317	924	7085686601722654	remora.elf	c057494c8c1198b0
 53	1336	7085688867426955	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
 1336	2037	7085688871375210	remora.elf	c057494c8c1198b0
+46	1359	7085699923246438	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
+1359	2000	7085699926717927	remora.elf	c057494c8c1198b0
+75	382	7085700348606837	port/CMakeFiles/IOLIBRARY_FILES.dir/ioLibrary_Driver/src/w5x00_spi.c.obj	2cc9075c947c69a3
+64	402	7085700348692472	CMakeFiles/remora.dir/port/ioLibrary_Driver/src/w5x00_spi.c.obj	504ae799f8494ad0
+383	511	7085700349919880	port/libIOLIBRARY_FILES.a	bd5d773dd141b720
+51	1114	7085700355917754	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
+1115	1696	7085700359148220	remora.elf	c057494c8c1198b0
