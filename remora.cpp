@@ -16,6 +16,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+// PicoBOB has UART on different pins to the standard Pico
+//#define PICOBOB
+
+#ifdef PICOBOB
+#define PICO_DEFAULT_UART 0
+#define PICO_DEFAULT_UART_TX_PIN 28
+#define PICO_DEFAULT_UART_RX_PIN 29
+#endif
+
+
 #include <stdio.h>
 #include <cstring>
 #include "pico/stdlib.h"
