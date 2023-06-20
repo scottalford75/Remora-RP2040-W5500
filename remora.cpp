@@ -531,7 +531,7 @@ void core1_entry()
                 deserialiseJSON();
                 configThreads();
                 createThreads();
-                debugThreadHigh();
+                //debugThreadHigh();
                 if (staticConfig)
                 {
                     loadStaticConfig();
@@ -540,7 +540,7 @@ void core1_entry()
                 {
                     loadModules();
                 }
-                debugThreadLow();
+                //debugThreadLow();
 
                 currentState = ST_START;
                 break;

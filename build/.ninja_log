@@ -1,13 +1,13 @@
 # ninja log v5
 43	407	7077952486808675	pico-sdk/src/rp2_common/boot_stage2/CMakeFiles/bs2_default.dir/compile_time_choice.S.obj	c7a94cea5b56ac4b
-14943	15661	7077952638313216	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/lowpan6.c.obj	9fa12b87ebe24aad
-408	908	7077952491561651	pico-sdk/src/rp2_common/boot_stage2/bs2_default.elf	d8b8316814f80ee0
-213	745	7077952490071883	libraries/CMakeFiles/DNS_FILES.dir/ioLibrary_Driver/Internet/DNS/dns.c.obj	567fa2f631caba4e
 10523	11171	7077952593929467	port/CMakeFiles/IOLIBRARY_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/pico_stdlib/stdlib.c.obj	f40a627d9529dbe2
 10490	11125	7077952593237447	port/CMakeFiles/IOLIBRARY_FILES.dir/ioLibrary_Driver/src/w5x00_gpio_irq.c.obj	5e49af773e4a2a8d
+213	745	7077952490071883	libraries/CMakeFiles/DNS_FILES.dir/ioLibrary_Driver/Internet/DNS/dns.c.obj	567fa2f631caba4e
+4393	5104	7078153442917889	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/tcp.c.obj	e8d2259e8d723ba8
 16624	17193	7077952653593312	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/pico_platform/platform.c.obj	79e7d7c799db3eb4
 1506	2185	7078153412343566	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/common/pico_util/pheap.c.obj	26394a8eaf40230e
-4393	5104	7078153442917889	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/tcp.c.obj	e8d2259e8d723ba8
+14943	15661	7077952638313216	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/lowpan6.c.obj	9fa12b87ebe24aad
+408	908	7077952491561651	pico-sdk/src/rp2_common/boot_stage2/bs2_default.elf	d8b8316814f80ee0
 18576	19238	7077952674418045	port/CMakeFiles/TIMER_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/common/pico_util/queue.c.obj	592f3386bf44c01f
 132	619	7077952489346802	libraries/CMakeFiles/W5500_FILES.dir/ioLibrary_Driver/Ethernet/wizchip_conf.c.obj	91a71a11b49d2b59
 908	1362	7077952495130335	pico-sdk/src/rp2_common/boot_stage2/bs2_default.bin	a69153462a0188fe
@@ -24,7 +24,7 @@
 163	668	7077952489038223	libraries/CMakeFiles/LOOPBACK_FILES.dir/ioLibrary_Driver/Application/loopback/loopback.c.obj	20b6fcf95aeaaa45
 17054	17661	7077952657625857	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/hardware_irq/irq_handler_chain.S.obj	d98d33be6735dc97
 1362	1792	7077952500129169	D:/Local Repositories RP2040/Remora-RP2040-W5500/build/pico-sdk/src/rp2_common/boot_stage2/bs2_default_padded_checksummed.S	9d42dc844370a3a3
-44	1221	7084300904125954	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
+51	1114	7085700355917754	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
 606	1134	7078153402871333	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/hardware_gpio/gpio.c.obj	a3930748825be389
 1135	1783	7078153408090362	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/common/pico_sync/mutex.c.obj	c0704d87d3dcb921
 6982	7682	7078153465432744	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ppp/eap.c.obj	164a32e5f369b18e
@@ -51,7 +51,7 @@
 15449	16126	7077952642758013	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ppp/ecp.c.obj	f88190f7e338dc2d
 14014	14712	7077952628886888	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/ipv6/ip6.c.obj	c493c443cba3439a
 1218	1738	7078153407536506	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/common/pico_sync/critical_section.c.obj	ded37bf6ac7d5433
-8	632	7085139854008355	build.ninja	3f0f35114993770b
+8	632	7089401169688588	build.ninja	3f0f35114993770b
 1280	2085	7078153411848287	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/common/pico_time/time.c.obj	b7f2d229a0d5bbae
 18440	19102	7077952672688664	port/CMakeFiles/TIMER_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/hardware_timer/timer.c.obj	1dac75415544a41e
 1389	1939	7078153410753566	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/hardware_timer/timer.c.obj	6a54832a09aa99f2
@@ -101,7 +101,7 @@
 6275	6982	7078153458695783	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ethernet.c.obj	9526919a89ef7862
 3019	3664	7078153426690875	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/pico_stdio/stdio.c.obj	caa83c83c7c76eea
 16084	16701	7077952648877598	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ppp/pppol2tp.c.obj	edbe455cd37a0280
-1221	1780	7084300907518787	remora.elf	c057494c8c1198b0
+1115	1696	7085700359148220	remora.elf	c057494c8c1198b0
 6670	7376	7078153462487052	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ppp/auth.c.obj	8224db740e06f71b
 4159	4861	7078153438189925	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/sys.c.obj	6b02876349f7fb13
 14612	15308	7077952634587409	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/api/sockets.c.obj	e78a1c145c61a652
@@ -147,7 +147,7 @@
 11856	12438	7077952605466342	port/CMakeFiles/IOLIBRARY_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/pico_divider/divider.S.obj	ec84db1ab844eef7
 1200	1659	7077952499408325	libraries/CMakeFiles/SNTP_FILES.dir/ioLibrary_Driver/Internet/SNTP/sntp.c.obj	2f4c378aeaa882bb
 8270	8621	7078153478201469	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/pico_rand/rand.c.obj	e5fe485f66840430
-10446	11083	7077952593687040	port/CMakeFiles/IOLIBRARY_FILES.dir/ioLibrary_Driver/src/w5x00_spi.c.obj	2cc9075c947c69a3
+75	382	7085700348606837	port/CMakeFiles/IOLIBRARY_FILES.dir/ioLibrary_Driver/src/w5x00_spi.c.obj	2cc9075c947c69a3
 19051	19645	7077952680336568	port/CMakeFiles/TIMER_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/pico_printf/printf.c.obj	b74aa2db4ea99671
 18011	18653	7077952668512305	port/CMakeFiles/TIMER_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/hardware_irq/irq.c.obj	c52583dabb0d0bd3
 10580	11204	7077952594589710	port/CMakeFiles/IOLIBRARY_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/src/rp2_common/hardware_gpio/gpio.c.obj	d4a562435c951f8e
@@ -223,7 +223,7 @@
 1559	2109	7077952504698122	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/mem.c.obj	9bdffceb5b6cec1a
 13969	14612	7077952628216148	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/ipv6/inet6.c.obj	bf5a62f96e1d4935
 12690	13320	7077952617034159	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/pbuf.c.obj	f343fe90405bda9d
-13286	13969	7077952624202732	port/libIOLIBRARY_FILES.a	bd5d773dd141b720
+383	511	7085700349919880	port/libIOLIBRARY_FILES.a	bd5d773dd141b720
 5477	6525	7078153450650730	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/ipv6/inet6.c.obj	2be413fd5892888f
 12729	13353	7077952616138957	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/raw.c.obj	bf9ddfea12a38c01
 15699	16350	7077952645213481	port/CMakeFiles/LWIP_FILES.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ppp/lcp.c.obj	10fa9ab053288a7f
@@ -355,7 +355,7 @@
 3377	4100	7078153429229035	CMakeFiles/remora.dir/libraries/ioLibrary_Driver/Ethernet/W5500/w5500.c.obj	5bbb1e65a4b6e12a
 3291	3990	7078153428892529	CMakeFiles/remora.dir/libraries/ioLibrary_Driver/Ethernet/socket.c.obj	a47577c24b6edbbe
 7144	7824	7078153466857928	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/netif/ppp/fsm.c.obj	864b67dd1697b58a
-3443	4159	7078153431265531	CMakeFiles/remora.dir/port/ioLibrary_Driver/src/w5x00_spi.c.obj	504ae799f8494ad0
+64	402	7085700348692472	CMakeFiles/remora.dir/port/ioLibrary_Driver/src/w5x00_spi.c.obj	504ae799f8494ad0
 3497	4212	7078153430911013	CMakeFiles/remora.dir/port/ioLibrary_Driver/src/w5x00_gpio_irq.c.obj	20e67080edc83615
 3617	4271	7078153432338377	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/init.c.obj	7f055d08f0c2a1d1
 5002	5805	7078153447489647	CMakeFiles/remora.dir/C_/Program_Files/Raspberry_Pi/Pico_SDK_v1.5.0/pico-sdk/lib/lwip/src/core/ipv4/ip4_addr.c.obj	51b390611ad2a3bb
@@ -415,29 +415,6 @@
 192	695	7078153398200486	CMakeFiles/remora.dir/modules/module.cpp.obj	3b099ef14e3d9578
 317	1580	7078153406194507	CMakeFiles/remora.dir/modules/debug/debug.cpp.obj	a279026af6a4371e
 362	2396	7078153413723988	CMakeFiles/remora.dir/modules/blink/blink.cpp.obj	42f3040c27665c5b
-58	362	7084273432685074	CMakeFiles/remora.dir/tftpserver.cpp.obj	39ffea50e602f5b1
-52	1274	7085141751170320	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1275	1915	7085141755374157	remora.elf	c057494c8c1198b0
-43	1485	7085158812024899	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1485	2057	7085158815707837	remora.elf	c057494c8c1198b0
-63	323	7085162449818184	CMakeFiles/remora.dir/tftpserver.cpp.obj	39ffea50e602f5b1
-45	1131	7085162672547154	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1131	1684	7085162676068534	remora.elf	c057494c8c1198b0
-44	1034	7085164916254698	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1034	1560	7085164919592843	remora.elf	c057494c8c1198b0
-51	1176	7085170833091584	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1177	1710	7085170836411301	remora.elf	c057494c8c1198b0
-48	1166	7085682013639859	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1167	1781	7085682017627314	remora.elf	c057494c8c1198b0
-48	1207	7085686335875350	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
 48	317	7085686598414642	CMakeFiles/remora.dir/tftpserver.cpp.obj	39ffea50e602f5b1
-317	924	7085686601722654	remora.elf	c057494c8c1198b0
-53	1336	7085688867426955	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1336	2037	7085688871375210	remora.elf	c057494c8c1198b0
-46	1359	7085699923246438	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1359	2000	7085699926717927	remora.elf	c057494c8c1198b0
-75	382	7085700348606837	port/CMakeFiles/IOLIBRARY_FILES.dir/ioLibrary_Driver/src/w5x00_spi.c.obj	2cc9075c947c69a3
-64	402	7085700348692472	CMakeFiles/remora.dir/port/ioLibrary_Driver/src/w5x00_spi.c.obj	504ae799f8494ad0
-383	511	7085700349919880	port/libIOLIBRARY_FILES.a	bd5d773dd141b720
-51	1114	7085700355917754	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
-1115	1696	7085700359148220	remora.elf	c057494c8c1198b0
+45	1233	7089416118906546	CMakeFiles/remora.dir/remora.cpp.obj	ca01f82aecd57bfa
+1233	1941	7089416123292981	remora.elf	c057494c8c1198b0

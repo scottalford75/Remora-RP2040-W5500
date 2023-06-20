@@ -1512,15 +1512,15 @@
 		},
 		{
 			"backtrace" : 2,
+			"id" : "ETHERNET_FILES::@56099a33689f37a39260"
+		},
+		{
+			"backtrace" : 2,
 			"id" : "IOLIBRARY_FILES::@5a6e59fc4828463ce5ae"
 		},
 		{
 			"backtrace" : 2,
 			"id" : "LWIP_FILES::@5a6e59fc4828463ce5ae"
-		},
-		{
-			"backtrace" : 2,
-			"id" : "ETHERNET_FILES::@56099a33689f37a39260"
 		}
 	],
 	"id" : "remora::@6890427a1f51a3e7e1df",
