@@ -21,7 +21,7 @@
     "cmake.configureSettings": {
       "CMAKE_MODULE_PATH": "${env:PICO_INSTALL_PATH}/pico-sdk-tools"
     },
-    "cmake.generator": "Ninja",
+    "cmake.generator": "NMake Makefiles",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
         "array": "cpp",
