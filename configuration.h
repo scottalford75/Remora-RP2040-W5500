@@ -2,7 +2,7 @@
 #define CONFIGURATION_H
 
 #define PRU_BASEFREQ    	40000           // PRU Base thread ISR update frequency (hz)
-#define PRU_SERVOFREQ       200            // PRU Servo thread ISR update freqency (hz)
+#define PRU_SERVOFREQ       500            // PRU Servo thread ISR update freqency (hz)
 
 #define BASE_SLICE          0               // RP2040 PWM Slice used by the Base thread
 #define SERVO_SLICE         1               // RP2040 PWM Slice used by the Servo thread
@@ -28,7 +28,7 @@
 // Data buffer configuration
 #define BUFFER_SIZE 		68            	// Size of recieve buffer - same as HAL component, 64
 
-#define PLL_SYS_KHZ (125 * 1000)    // 125MHz
+#define PLL_SYS_KHZ (133 * 1000)    // 133MHz
 #define SOCKET_MACRAW 0
 #define PORT_LWIPERF 5001
 
