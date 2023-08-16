@@ -823,7 +823,13 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 	if (rxBuffer.header == PRU_READ)
 	{
-		txData.header = PRU_DATA;
+        while (baseThread->semaphore);
+        baseThread->semaphore = true;
+
+        while(servoThread->semaphore);
+        servoThread->semaphore = true;		
+        
+        txData.header = PRU_DATA;
 		txlen = BUFFER_SIZE;
 		comms->dataReceived();
 	}
@@ -835,7 +841,13 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 		// ensure an atomic access to the rxBuffer
         // wait for the threads not to be executing
-        while (baseThread->semaphore || servoThread->semaphore){}
+        //while (baseThread->semaphore || servoThread->semaphore){}
+
+        while (baseThread->semaphore);
+        baseThread->semaphore = true;
+
+        while(servoThread->semaphore);
+        servoThread->semaphore = true;
 
 		// then move the data
 		for (int i = 0; i < BUFFER_SIZE; i++)
@@ -850,6 +862,9 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 	// copy the data into the buffer
 	pbuf_take(txBuf, (char*)&txData.txBuffer, txlen);
+
+    servoThread->semaphore = false;
+    baseThread->semaphore = false;
 
 	// Connect to the remote client
 	udp_connect(upcb, addr, port);

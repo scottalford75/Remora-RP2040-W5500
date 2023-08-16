@@ -42,6 +42,7 @@ void pruThread::registerModulePost(Module* module)
 
 void pruThread::run(void)
 {
+	while (this->semaphore == true);	
 	this->semaphore = true;
 
 	// iterate over the Thread pointer vector to run all instances of Module::runModule()

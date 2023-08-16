@@ -138,7 +138,7 @@ static void wizchip_critical_section_unlock(void)
 void wizchip_spi_initialize(void)
 {
     // this example will use SPI0 at 40MHz
-    spi_init(SPI_PORT, 40000 * 1000);
+    spi_init(SPI_PORT, 50000 * 1000);
 
     gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
