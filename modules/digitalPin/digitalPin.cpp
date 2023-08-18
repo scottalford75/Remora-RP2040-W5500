@@ -25,8 +25,8 @@ void createDigitalPin()
     }
     else inv = false;
 
-    ptrOutputs = &rxData.outputs;
-    ptrInputs = &txData.inputs;
+    ptrOutputs = &pruRxData->outputs;
+    ptrInputs = &pruTxData->inputs;
 
     printf("Make Digital %s at pin %s\n", mode, pin);
 

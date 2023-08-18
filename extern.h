@@ -17,13 +17,11 @@ extern JsonObject module;
 extern pruThread* baseThread;
 extern pruThread* servoThread;
 
-// unions for RX and TX data
-extern volatile rxData_t rxData;
-extern volatile txData_t txData;
+// unions for RX and TX data pointers that are used by the PRU threads
+extern volatile rxData_t* pruRxData;
+extern volatile txData_t* pruTxData;
 
 // pointers to data
-extern volatile rxData_t*  ptrRxData;
-extern volatile txData_t*  ptrTxData;
 extern volatile int32_t*   ptrTxHeader;  
 extern volatile bool*      ptrPRUreset;
 extern volatile int32_t*   ptrJointFreqCmd[JOINTS];

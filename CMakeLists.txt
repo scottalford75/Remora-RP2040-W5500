@@ -95,7 +95,7 @@ target_link_libraries(remora
         LWIP_FILES
         )
 
-pico_enable_stdio_usb(remora 1)
+pico_enable_stdio_usb(remora 0)
 pico_enable_stdio_uart(remora 0)
         
 pico_add_extra_outputs(remora)

@@ -15,10 +15,18 @@ void createStepgen()
     const char* step = module["Step Pin"];
     const char* dir = module["Direction Pin"];
 
+	//my approach is kind of wrong.  I need to create the two buffers here, and then add another pointer that is passed at creation that points to an indicator to tell the stepgen where to pull the data.
+	//will need to do the same thing in all pru threads.  Encoders need to be told where to put their data.
+
+
     // configure pointers to data source and feedback location
-    ptrJointFreqCmd[joint] = &rxData.jointFreqCmd[joint];
-    ptrJointFeedback[joint] = &txData.jointFeedback[joint];
-    ptrJointEnable = &rxData.jointEnable;
+	//this should now be using pointers to data instead of direct assignment.
+    //ptrJointFreqCmd[joint] = &rxData.jointFreqCmd[joint];
+	ptrJointFreqCmd[joint] = &(pruRxData->jointFreqCmd[joint]);
+    //ptrJointFeedback[joint] = &txData.jointFeedback[joint];
+	ptrJointFreqCmd[joint] = &(pruTxData->jointFeedback[joint]);
+    //ptrJointEnable = &rxData.jointEnable;
+	ptrJointEnable = &(pruRxData->jointEnable);
 
     // create the step generator, register it in the thread
     Module* stepgen = new Stepgen(base_freq, joint, step, dir, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable);

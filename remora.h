@@ -21,7 +21,10 @@ typedef union
   };
 } rxData_t;
 
-extern volatile rxData_t rxData;
+//extern volatile rxData_t rxData1;
+//extern volatile rxData_t rxData2;
+
+//extern volatile rxData_t rxData_buf[2];
 
 
 typedef union
@@ -41,7 +44,14 @@ typedef union
   };
 } txData_t;
 
-extern volatile txData_t txData;
+//extern volatile txData_t txData1;
+//extern volatile rxData_t txData2;
+
+//extern volatile txData_t txData_buf[2];
+
+// pointers to data
+//extern volatile txData_t* prutxData;
+//extern volatile rxData_t* pruRxData;
 
 
 #pragma pack(pop)
