@@ -18,8 +18,15 @@ extern pruThread* baseThread;
 extern pruThread* servoThread;
 
 // unions for RX and TX data pointers that are used by the PRU threads
-extern volatile rxData_t* pruRxData;
-extern volatile txData_t* pruTxData;
+
+extern RxPingPongBuffer rxPingPongBuffer;
+extern TxPingPongBuffer txPingPongBuffer;
+
+extern int currentRxBuffer;
+extern int currentTxBuffer;
+
+extern rxData_t* currentRxPacket;
+extern txData_t* currentTxPacket;
 
 // pointers to data
 extern volatile int32_t*   ptrTxHeader;  
@@ -31,5 +38,8 @@ extern volatile float*     ptrSetPoint[VARIABLES];
 extern volatile float*     ptrProcessVariable[VARIABLES];
 extern volatile uint32_t*  ptrInputs;
 extern volatile uint32_t*  ptrOutputs;
+
+extern volatile uint8_t *ptrTxSelector;
+extern volatile uint8_t *ptrRxSelector;
 
 #endif

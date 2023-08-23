@@ -1,4 +1,6 @@
+
 #include "stepgen.h"
+#include "../remora.h"
 //#include "../boardconfig.h"
 
 
@@ -15,21 +17,13 @@ void createStepgen()
     const char* step = module["Step Pin"];
     const char* dir = module["Direction Pin"];
 
-	//my approach is kind of wrong.  I need to create the two buffers here, and then add another pointer that is passed at creation that points to an indicator to tell the stepgen where to pull the data.
-	//will need to do the same thing in all pru threads.  Encoders need to be told where to put their data.
-
-
     // configure pointers to data source and feedback location
-	//this should now be using pointers to data instead of direct assignment.
     //ptrJointFreqCmd[joint] = &rxData.jointFreqCmd[joint];
-	ptrJointFreqCmd[joint] = &(pruRxData->jointFreqCmd[joint]);
     //ptrJointFeedback[joint] = &txData.jointFeedback[joint];
-	ptrJointFreqCmd[joint] = &(pruTxData->jointFeedback[joint]);
     //ptrJointEnable = &rxData.jointEnable;
-	ptrJointEnable = &(pruRxData->jointEnable);
 
     // create the step generator, register it in the thread
-    Module* stepgen = new Stepgen(base_freq, joint, step, dir, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable);
+    Module* stepgen = new Stepgen(base_freq, joint, step, dir, STEPBIT);
     baseThread->registerModule(stepgen);
     baseThread->registerModulePost(stepgen);
 }
@@ -44,19 +38,15 @@ void loadStaticStepgen()
 
 }
 
-
 /***********************************************************************
                 METHOD DEFINITIONS
 ************************************************************************/
 
-Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable) :
+Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int stepBit) :
 	jointNumber(jointNumber),
 	step(step),
 	direction(direction),
-	stepBit(stepBit),
-	ptrFrequencyCommand(&ptrFrequencyCommand),
-	ptrFeedback(&ptrFeedback),
-	ptrJointEnable(&ptrJointEnable)
+	stepBit(stepBit)
 {
 	this->stepPin = new Pin(this->step, OUTPUT);
 	this->directionPin = new Pin(this->direction, OUTPUT);
@@ -88,11 +78,14 @@ void Stepgen::makePulses()
 {
 	int32_t stepNow = 0;
 
-	this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
+	rxData_t* rxData = getCurrentRxBuffer(&rxPingPongBuffer);
+	txData_t* txData = getCurrentTxBuffer(&txPingPongBuffer);
+
+	this->isEnabled = ((rxData->jointEnable & this->mask) != 0);
 
 	if (this->isEnabled == true)  												// this Step generator is enables so make the pulses
 	{
-		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
+		this->frequencyCommand = rxData->jointFreqCmd[jointNumber];            		// Get the latest frequency command via pointer to the data source
 		this->DDSaddValue = this->frequencyCommand * this->frequencyScale;		// Scale the frequency command to get the DDS add value
 		stepNow = this->DDSaccumulator;                           				// Save the current DDS accumulator value
 		this->DDSaccumulator += this->DDSaddValue;           	  				// Update the DDS accumulator with the new add value
@@ -111,9 +104,9 @@ void Stepgen::makePulses()
 
 		if (stepNow)
 		{
-			this->directionPin->set(this->isForward);             		// Set direction pin
+			this->directionPin->set(this->isForward);             		    // Set direction pin
 			this->stepPin->set(true);										// Raise step pin - A4988 / DRV8825 stepper drivers only need 200ns setup time
-			*(this->ptrFeedback) = this->DDSaccumulator;                     // Update position feedback via pointer to the data receiver
+			txData->jointFeedback[jointNumber] = this->DDSaccumulator;       // Update position feedback via pointer to the data receiver
 			this->isStepping = true;
 		}
 	}

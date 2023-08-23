@@ -119,15 +119,10 @@ uint8_t noDataCount;
 pruThread* servoThread;
 pruThread* baseThread;
 RemoraComms* comms;
-
-// unions for RX and TX data
-rxData_t rxBuffer;
-volatile rxData_t rxData_buf[2];
-volatile txData_t txData_buf[2];
-
-// pointers to data
-volatile txData_t* pruTxData;
-volatile rxData_t* pruRxData;
+RxPingPongBuffer rxPingPongBuffer;
+TxPingPongBuffer txPingPongBuffer;
+rxData_t* currentRxPacket;
+txData_t* currentTxPacket;
 
 volatile int32_t* ptrTxHeader;  
 volatile bool*    ptrPRUreset;
@@ -138,7 +133,6 @@ volatile float*   ptrSetPoint[VARIABLES];
 volatile float*   ptrProcessVariable[VARIABLES];
 volatile uint32_t* ptrInputs;
 volatile uint32_t* ptrOutputs;
-
 
 // Json config file stuff
 const char defaultConfig[] = DEFAULT_CONFIG;
@@ -398,6 +392,9 @@ void loadStaticConfig()
     printf("\n4. Loading static configuration\n");
 
     // Servo thread modules
+
+    rxData_t* pruRxData = currentRxPacket;
+    txData_t* pruTxData = currentTxPacket;
     
     // Ethernet communication monitoring
 	comms = new RemoraComms();
@@ -411,21 +408,17 @@ void loadStaticConfig()
     }
 
     //loadStaticIO();
-
-    ptrOutputs = &pruRxData->outputs;
-    ptrInputs = &pruTxData->inputs;
- 
     //Digital Outputs
     for (int i = 0; i < sizeof(DOConfigs)/sizeof(*DOConfigs); i++) {
         printf("\nCreate digital output for %s\n", DOConfigs[i].Comment);
-        Module* digitalOutput = new DigitalPin(*ptrOutputs, 1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
+        Module* digitalOutput = new DigitalPin(1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
         servoThread->registerModule(digitalOutput);
     }
   
     //Digital Inputs
     for (int i = 0; i < sizeof(DIConfigs)/sizeof(*DIConfigs); i++) {
         printf("\nCreate digital input for %s\n", DIConfigs[i].Comment);
-        Module* digitalInput = new DigitalPin(*ptrInputs, 0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
+        Module* digitalInput = new DigitalPin(0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
         servoThread->registerModule(digitalInput);
     }
 
@@ -433,11 +426,12 @@ void loadStaticConfig()
     //loadStaticStepgen();
     for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
         printf("\nCreate step generator for Joint %d\n", i);
+        //I don't think these next 3 lines do anything anymore.
         ptrJointFreqCmd[i] = &pruRxData->jointFreqCmd[i];
         ptrJointFeedback[i] = &pruTxData->jointFeedback[i];
         ptrJointEnable = &pruRxData->jointEnable;
  
-        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT, *ptrJointFreqCmd[i], *ptrJointFeedback[i], *ptrJointEnable);
+        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT);
         baseThread->registerModule(stepgen);
         baseThread->registerModulePost(stepgen);
     }
@@ -636,10 +630,10 @@ void core1_entry()
                 // rxData.rxBuffer is volatile so need to do this the long way. memset cannot be used for volatile
                 printf("   Resetting rxBuffer\n");
                 {
-                    int n = sizeof(pruRxData->rxBuffer);
+                    int n = sizeof(currentRxPacket->rxBuffer);
                     while(n-- > 0)
                     {
-                        pruRxData->rxBuffer[n] = 0;
+                        currentRxPacket->rxBuffer[n] = 0;
                     }
                 }
 
@@ -652,6 +646,38 @@ void core1_entry()
 	    }
     }
 
+}
+
+void initRxPingPongBuffer(RxPingPongBuffer* buffer) {
+    buffer->currentRxBuffer = 0;
+}
+
+void initTxPingPongBuffer(TxPingPongBuffer* buffer) {
+    buffer->currentTxBuffer = 0;
+}
+
+void swapRxBuffers(RxPingPongBuffer* buffer) {
+    buffer->currentRxBuffer = 1 - buffer->currentRxBuffer;
+}
+
+void swapTxBuffers(TxPingPongBuffer* buffer) {
+    buffer->currentTxBuffer = 1 - buffer->currentTxBuffer;
+}
+
+rxData_t* getCurrentRxBuffer(RxPingPongBuffer* buffer) {
+    return &buffer->rxBuffers[buffer->currentRxBuffer];
+}
+
+txData_t* getCurrentTxBuffer(TxPingPongBuffer* buffer) {
+    return &buffer->txBuffers[buffer->currentTxBuffer];
+}
+
+static rxData_t* getAltRxBuffer(RxPingPongBuffer* buffer) {
+    return &buffer->rxBuffers[1 - buffer->currentRxBuffer];
+}
+
+static txData_t* getAltTxBuffer(TxPingPongBuffer* buffer) {
+    return &buffer->txBuffers[1 - buffer->currentTxBuffer];
 }
 
 
@@ -674,6 +700,9 @@ int main()
     EthernetInit();
     udpServerInit();
     IAP_tftpd_init();
+
+    initRxPingPongBuffer(&rxPingPongBuffer);
+    initTxPingPongBuffer(&txPingPongBuffer);
 
     // launch main Remora code on the second core
     multicore_launch_core1(core1_entry);
@@ -818,87 +847,69 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	int txlen = 0;
 	struct pbuf *txBuf;
     uint32_t status;
-    static uint8_t pingpong = 0;
 
-    //these point to the data that will interact with UDP
-    static volatile rxData_t*  udpRxDataPtr;
-    static volatile txData_t*  udpTxDataPtr;
+    //received data from host needs to go into the inactive buffer
+    rxData_t* rxBuffer = getAltRxBuffer(&rxPingPongBuffer);
+    //data sent to host needs to come from the active buffer
+    txData_t* txBuffer = getCurrentTxBuffer(&txPingPongBuffer);
 
 	// copy the UDP payload into the rxData structure
-	memcpy(&rxBuffer.rxBuffer, p->payload, p->len);
+	memcpy(&rxBuffer->rxBuffer, p->payload, p->len);
 
     //received a PRU request, need to copy data and then change pointer assignments.
-    if (rxBuffer.header == PRU_READ || rxBuffer.header == PRU_WRITE) {
-        
-        //new data goes into the alternate buffer
-        pingpong = !pingpong;
+    if (rxBuffer->header == PRU_READ || rxBuffer->header == PRU_WRITE) {
 
-        //transmission pointers at where the just received data will go/come from.
-        udpTxDataPtr = &txData_buf[pingpong];
-        udpRxDataPtr = &rxData_buf[pingpong];
-
-        if (rxBuffer.header == PRU_READ)
+        if (rxBuffer->header == PRU_READ)
         {        
-            //if it is a read, need to swap the TX buffer over
+            //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             while (baseThread->semaphore);
             baseThread->semaphore = true;
-
             while(servoThread->semaphore);
             servoThread->semaphore = true;
-
             status = save_and_disable_interrupts();
 
-            pruRxData = &rxData_buf[pingpong];
-            udpTxDataPtr = &txData_buf[pingpong];
+            //feedback data will now go into the alternate buffer
+            swapTxBuffers(&txPingPongBuffer);
 
             servoThread->semaphore = false;
             baseThread->semaphore = false;
-
-            restore_interrupts(status);               
+            restore_interrupts(status);
             
-            udpTxDataPtr->header = PRU_DATA;
+            //txBuffer pointer is now directed at the 'old' data for transmission
+            txBuffer->header = PRU_DATA;
             txlen = BUFFER_SIZE;
             comms->dataReceived();
         }
-        else if (rxBuffer.header == PRU_WRITE)
+        else if (rxBuffer->header == PRU_WRITE)
         {
-            udpTxDataPtr->header = PRU_ACKNOWLEDGE;
-            txlen = sizeof(udpTxDataPtr->header);
+            //if it is a write, then both the RX and TX buffers need to be changed.
+            while (baseThread->semaphore);
+            baseThread->semaphore = true;
+            while(servoThread->semaphore);
+            servoThread->semaphore = true;
+            status = save_and_disable_interrupts();
+
+            //feedback data will now go into the alternate buffer
+            swapTxBuffers(&txPingPongBuffer);
+            //frequency command will now come from the new data
+            swapRxBuffers(&rxPingPongBuffer);
+
+            servoThread->semaphore = false;
+            baseThread->semaphore = false;
+            restore_interrupts(status);
+            
+            //txBuffer pointer is now directed at the 'old' data for transmission
+            txBuffer->header = PRU_DATA;
+            txlen = BUFFER_SIZE;
             comms->dataReceived();
-
-            // then move the data
-            for (int i = 0; i < BUFFER_SIZE; i++)
-            {
-                udpRxDataPtr->rxBuffer[i] = rxBuffer.rxBuffer[i];
-            }
-        }
-
-        while (baseThread->semaphore);
-        baseThread->semaphore = true;
-
-        while(servoThread->semaphore);
-        servoThread->semaphore = true;
-
-        status = save_and_disable_interrupts();
-
-        //only pointer assignments need to be atomic.
-
-        //PRU pointers at the new locations.
-        pruTxData = &txData_buf[pingpong];
-        pruRxData = &rxData_buf[pingpong];
-
-        servoThread->semaphore = false;
-        baseThread->semaphore = false;
-
-        restore_interrupts(status);    	
+        }	
     }
    
 	// allocate pbuf from RAM
 	txBuf = pbuf_alloc(PBUF_TRANSPORT, txlen, PBUF_RAM);
 
-	// copy the old data into the buffer
-
-	pbuf_take(txBuf, (char*)udpTxDataPtr, txlen);
+	// copy the data into the buffer
+	pbuf_take(txBuf, (char*)&txBuffer->txBuffer, txlen);
 
 	// Connect to the remote client
 	udp_connect(upcb, addr, port);
