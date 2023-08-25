@@ -1,8 +1,8 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#define PRU_BASEFREQ    	30000           // PRU Base thread ISR update frequency (hz)
-#define PRU_SERVOFREQ       1500            // PRU Servo thread ISR update freqency (hz)
+#define PRU_BASEFREQ    	60000           // PRU Base thread ISR update frequency (hz)
+#define PRU_SERVOFREQ       2000            // PRU Servo thread ISR update freqency (hz)
 
 #define BASE_SLICE          0               // RP2040 PWM Slice used by the Base thread
 #define SERVO_SLICE         1               // RP2040 PWM Slice used by the Servo thread
@@ -22,7 +22,7 @@
 #define PRU_ACKNOWLEDGE		0x61636b6e	    // "ackn" payload
 #define PRU_ERR		        0x6572726f	    // "erro" payload
 
-#define DATA_ERR_MAX         400
+#define DATA_ERR_MAX         40
 
 
 // Data buffer configuration

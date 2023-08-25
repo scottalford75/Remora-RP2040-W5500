@@ -79,6 +79,8 @@ DigitalPin::DigitalPin(int mode, std::string portAndPin, int bitNumber, bool inv
 void DigitalPin::update()
 {
 	bool pinState;
+    rxData_t* currentRxPacket = getCurrentRxBuffer(&rxPingPongBuffer);
+	txData_t* currentTxPacket = getCurrentTxBuffer(&txPingPongBuffer);
 
 	if (this->mode == 0x0)									// the pin is configured as an input
 	{

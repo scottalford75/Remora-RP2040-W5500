@@ -22,24 +22,4 @@ extern pruThread* servoThread;
 extern RxPingPongBuffer rxPingPongBuffer;
 extern TxPingPongBuffer txPingPongBuffer;
 
-extern int currentRxBuffer;
-extern int currentTxBuffer;
-
-extern rxData_t* currentRxPacket;
-extern txData_t* currentTxPacket;
-
-// pointers to data
-extern volatile int32_t*   ptrTxHeader;  
-extern volatile bool*      ptrPRUreset;
-extern volatile int32_t*   ptrJointFreqCmd[JOINTS];
-extern volatile int32_t*   ptrJointFeedback[JOINTS];
-extern volatile uint8_t*   ptrJointEnable;
-extern volatile float*     ptrSetPoint[VARIABLES];
-extern volatile float*     ptrProcessVariable[VARIABLES];
-extern volatile uint32_t*  ptrInputs;
-extern volatile uint32_t*  ptrOutputs;
-
-extern volatile uint8_t *ptrTxSelector;
-extern volatile uint8_t *ptrRxSelector;
-
 #endif

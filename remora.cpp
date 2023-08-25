@@ -39,6 +39,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hardware/pwm.h"
 #include "hardware/flash.h"
 #include "hardware/watchdog.h"
+#include "hardware/regs/busctrl.h"
+#include "hardware/structs/bus_ctrl.h"
 
 #include "configuration.h"
 #include "remora.h"
@@ -121,18 +123,6 @@ pruThread* baseThread;
 RemoraComms* comms;
 RxPingPongBuffer rxPingPongBuffer;
 TxPingPongBuffer txPingPongBuffer;
-rxData_t* currentRxPacket;
-txData_t* currentTxPacket;
-
-volatile int32_t* ptrTxHeader;  
-volatile bool*    ptrPRUreset;
-volatile int32_t* ptrJointFreqCmd[JOINTS];
-volatile int32_t* ptrJointFeedback[JOINTS];
-volatile uint8_t* ptrJointEnable;
-volatile float*   ptrSetPoint[VARIABLES];
-volatile float*   ptrProcessVariable[VARIABLES];
-volatile uint32_t* ptrInputs;
-volatile uint32_t* ptrOutputs;
 
 // Json config file stuff
 const char defaultConfig[] = DEFAULT_CONFIG;
@@ -393,8 +383,11 @@ void loadStaticConfig()
 
     // Servo thread modules
 
-    rxData_t* pruRxData = currentRxPacket;
-    txData_t* pruTxData = currentTxPacket;
+    //rxData_t* pruRxData = currentRxPacket;
+    //txData_t* pruTxData = currentTxPacket;
+
+    rxData_t* pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
+	txData_t* pruTxData = getCurrentTxBuffer(&txPingPongBuffer);
     
     // Ethernet communication monitoring
 	comms = new RemoraComms();
@@ -427,9 +420,9 @@ void loadStaticConfig()
     for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
         printf("\nCreate step generator for Joint %d\n", i);
         //I don't think these next 3 lines do anything anymore.
-        ptrJointFreqCmd[i] = &pruRxData->jointFreqCmd[i];
-        ptrJointFeedback[i] = &pruTxData->jointFeedback[i];
-        ptrJointEnable = &pruRxData->jointEnable;
+        //ptrJointFreqCmd[i] = &pruRxData->jointFreqCmd[i];
+        //ptrJointFeedback[i] = &pruTxData->jointFeedback[i];
+        //ptrJointEnable = &pruRxData->jointEnable;
  
         Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT);
         baseThread->registerModule(stepgen);
@@ -491,7 +484,7 @@ void debugThreadHigh()
 {
     printf("\n  Thread debugging.... \n\n");
 
-    Module* debugOnB = new Debug("GP14", 1);
+    Module* debugOnB = new Debug("GP06", 1);
     baseThread->registerModule(debugOnB);
 
     Module* debugOnS = new Debug("GP15", 1);
@@ -510,11 +503,12 @@ void debugThreadLow()
     servoThread->registerModule(debugOffS);
 }
 
-
 void core1_entry()
 {
     enum State currentState;
     enum State prevState;
+
+    rxData_t* pruRxData;
 
     currentState = ST_SETUP;
     prevState = ST_RESET;
@@ -581,6 +575,8 @@ void core1_entry()
                     printf("\n## Entering IDLE state\n");
                 }
                 prevState = currentState;
+                //servo thread is run outside of interrupt context.
+                servoThread->run();                
 
                 //wait for data before changing to running state
                 
@@ -597,7 +593,10 @@ void core1_entry()
                 {
                     printf("\n## Entering RUNNING state\n");
                 }
+
                 prevState = currentState;
+                //servo thread is run outside of interrupt context.
+                servoThread->run();
                 
                 if (comms->getStatus() == false)
                 {
@@ -613,7 +612,8 @@ void core1_entry()
                     printf("\n## Entering STOP state\n");
                 }
                 prevState = currentState;
-
+                //servo thread is run outside of interrupt context.
+                servoThread->run();              
 
                 currentState = ST_STOP;
                 break;
@@ -628,12 +628,14 @@ void core1_entry()
 
                 // set all of the rxData buffer to 0
                 // rxData.rxBuffer is volatile so need to do this the long way. memset cannot be used for volatile
+                pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
+
                 printf("   Resetting rxBuffer\n");
                 {
-                    int n = sizeof(currentRxPacket->rxBuffer);
+                    int n = sizeof(pruRxData->rxBuffer);
                     while(n-- > 0)
                     {
-                        currentRxPacket->rxBuffer[n] = 0;
+                        pruRxData->rxBuffer[n] = 0;
                     }
                 }
 
@@ -689,6 +691,9 @@ int main()
     IP4_ADDR(&g_gateway, 10, 10, 10, 1);
 
     set_clock_khz();
+
+    /* Grant high bus priority to the second core. */
+    bus_ctrl_hw->priority = BUSCTRL_BUS_PRIORITY_PROC1_BITS;
 
     // Initialize stdio after the clock change
     stdio_init_all();
@@ -829,7 +834,6 @@ void udpServerInit(void)
    upcb = udp_new();
    err = udp_bind(upcb, &g_ip, 27181);  // 27181 is the server UDP port
 
-
    /* 3. Set a receive callback for the upcb */
    if(err == ERR_OK)
    {
@@ -845,6 +849,7 @@ void udpServerInit(void)
 void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
 	int txlen = 0;
+    int n;
 	struct pbuf *txBuf;
     uint32_t status;
 
@@ -853,7 +858,6 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
     //data sent to host needs to come from the active buffer
     txData_t* txBuffer = getCurrentTxBuffer(&txPingPongBuffer);
 
-	// copy the UDP payload into the rxData structure
 	memcpy(&rxBuffer->rxBuffer, p->payload, p->len);
 
     //received a PRU request, need to copy data and then change pointer assignments.
@@ -862,18 +866,8 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         if (rxBuffer->header == PRU_READ)
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
-            while (baseThread->semaphore);
-            baseThread->semaphore = true;
-            while(servoThread->semaphore);
-            servoThread->semaphore = true;
-            status = save_and_disable_interrupts();
-
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);
-
-            servoThread->semaphore = false;
-            baseThread->semaphore = false;
-            restore_interrupts(status);
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_DATA;
@@ -883,23 +877,14 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-            while (baseThread->semaphore);
-            baseThread->semaphore = true;
-            while(servoThread->semaphore);
-            servoThread->semaphore = true;
-            status = save_and_disable_interrupts();
 
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);
             //frequency command will now come from the new data
             swapRxBuffers(&rxPingPongBuffer);
-
-            servoThread->semaphore = false;
-            baseThread->semaphore = false;
-            restore_interrupts(status);
             
             //txBuffer pointer is now directed at the 'old' data for transmission
-            txBuffer->header = PRU_DATA;
+            txBuffer->header = PRU_ACKNOWLEDGE;
             txlen = BUFFER_SIZE;
             comms->dataReceived();
         }	
