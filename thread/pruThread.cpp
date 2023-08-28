@@ -55,10 +55,12 @@ void pruThread::registerModulePost(Module* module)
 
 void pruThread::run(void)
 {
-	static uint32_t status;
 
 	if(!this->execute)
-		return;
+		return;	
+	
+	while (this->semaphore == true);	
+		this->semaphore = true;	
 	
 	if (this->slice == 0){
 		gpio_put(6, 1);
@@ -86,4 +88,5 @@ void pruThread::run(void)
 	}
 
 	this->execute = false;
+	this->semaphore = false;
 }

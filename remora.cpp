@@ -863,11 +863,18 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
     //received a PRU request, need to copy data and then change pointer assignments.
     if (rxBuffer->header == PRU_READ || rxBuffer->header == PRU_WRITE) {
 
+
         if (rxBuffer->header == PRU_READ)
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
+            while (baseThread->semaphore);
+                baseThread->semaphore = true;
+            //don't need to wait for the servo thread.
+
             swapTxBuffers(&txPingPongBuffer);
+
+            baseThread->semaphore = false;            
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_DATA;
@@ -877,11 +884,14 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-
+            while (baseThread->semaphore);
+                baseThread->semaphore = true;
+            //don't need to wait for the servo thread.
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);
             //frequency command will now come from the new data
             swapRxBuffers(&rxPingPongBuffer);
+            baseThread->semaphore = false;               
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_ACKNOWLEDGE;

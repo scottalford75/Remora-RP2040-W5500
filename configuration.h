@@ -1,7 +1,7 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#define PRU_BASEFREQ    	60000           // PRU Base thread ISR update frequency (hz)
+#define PRU_BASEFREQ    	50000           // PRU Base thread ISR update frequency (hz)
 #define PRU_SERVOFREQ       2000            // PRU Servo thread ISR update freqency (hz)
 
 #define BASE_SLICE          0               // RP2040 PWM Slice used by the Base thread

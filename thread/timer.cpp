@@ -29,9 +29,9 @@ pruTimer::pruTimer(uint8_t slice, uint32_t frequency, pruThread* ownerPtr):
 void pruTimer::timerTick(void)
 {
 	//base thread is run from interrupt context.  Servo thread is not and can get interrupted.
+    this->timerOwnerPtr->execute = true;
     if (this->slice == 0)
 	    this->timerOwnerPtr->run();
-    this->timerOwnerPtr->execute = true;
 }
 
 
