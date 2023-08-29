@@ -22,7 +22,7 @@
 #define PIN_RST 20
 
 /* Use SPI DMA */
-//#define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
+#define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
 
 /**
  * ----------------------------------------------------------------------------------------------------

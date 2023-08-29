@@ -1,5 +1,6 @@
 #include "hardware/irq.h"
-#include "hardware/pwm.h"
+//#include "hardware/pwm.h"
+#include "hardware/timer.h"
 
 #include <stdio.h>
 
@@ -10,6 +11,8 @@
 #include "pruThread.h"
 
 extern "C" void PWM_Wrap_Handler();
+extern "C" void PWM_Wrap_Handler0();
+extern "C" void PWM_Wrap_Handler1();
 
 // Timer constructor
 pruTimer::pruTimer(uint8_t slice, uint32_t frequency, pruThread* ownerPtr):
@@ -25,48 +28,43 @@ pruTimer::pruTimer(uint8_t slice, uint32_t frequency, pruThread* ownerPtr):
 
 void pruTimer::timerTick(void)
 {
-	//Do something here
-	this->timerOwnerPtr->run();
+	//base thread is run from interrupt context.  Servo thread is not and can get interrupted.
+    this->timerOwnerPtr->execute = true;
+    if (this->slice == 0)
+	    this->timerOwnerPtr->run();
 }
 
 
 
 void pruTimer::startTimer(void)
 {
-    uint32_t wrap, div;
-
-    printf("    setting up timer on PWM Slice %d\n", this->slice);
-
-    // We want exact frequencies for the threads so a combination of divider and top needs to be found
-    // 40khz 	Top = 3125-1	    Div = 1.0    <-- Base thread
-    // 1khz		Top = 62500-1	    Div = 2.0    <-- Servo thread
-
-    // Find a combination of wrap and div for the desired frequency - this may not give the exact frequency
-    // TODO - maybe look for more accurate combinations?
+    uint32_t period;
+    
+    printf("    setting up timer Slice %d\n", this->slice);
    
-    wrap = (PLL_SYS_KHZ * 1000) / this->frequency;
-    div = 1;
-    //printf("    frequcney = %d, wrap = %d\n", this->frequency, wrap);
-    while (wrap > 65535)
-    {
-        wrap >>= 1;
-        div <<= 1;
-        //printf("    wrap = %d, div =%d\n", wrap, div);
+    if (this->slice == 0)
+        period = BASE_PERIOD;
+    else if (this->slice == 1)
+        period = SERVO_PERIOD;
+    else
+        period = 0;
+    printf("    actual period = %d\n", period);
+
+    if (this->slice == 0){
+        hw_set_bits(&timer_hw->inte, 1u << slice);//use alarm 0
+        irq_set_exclusive_handler(TIMER_IRQ_0, PWM_Wrap_Handler0);
+        irq_set_enabled(TIMER_IRQ_0, true);
+        timer_hw->alarm[slice] = timer_hw->timerawl + BASE_PERIOD;
     }
-    if(div > 256) printf("    Invalid frequency\n");
-    wrap--;
 
-    printf("    desired frequency = %d, div = %d, wrap = %d\n", frequency, div, wrap);
-    printf("    actual frequency  = %6.4f\n", float((PLL_SYS_KHZ * 1000)/ div / (wrap + 1)));
-
-    pwm_set_clkdiv(this->slice, div);
-    pwm_set_wrap(this->slice, wrap);
-    pwm_set_irq_enabled(this->slice, true);
-    pwm_set_enabled(this->slice, true);
-
-    irq_set_exclusive_handler(PWM_IRQ_WRAP, PWM_Wrap_Handler);
-    irq_set_priority(PWM_IRQ_WRAP, 0);
-    irq_set_enabled(PWM_IRQ_WRAP, true);
+    else if (this->slice == 1){
+        hw_set_bits(&timer_hw->inte, 1u << slice);//use alarm 1
+        irq_set_exclusive_handler(TIMER_IRQ_1, PWM_Wrap_Handler1);
+        irq_set_enabled(TIMER_IRQ_1, true);
+        timer_hw->alarm[slice] = timer_hw->timerawl + SERVO_PERIOD;
+    } else{
+        printf("	Invalid Slice\n");
+    }
 
     printf("	timer started\n");
 }

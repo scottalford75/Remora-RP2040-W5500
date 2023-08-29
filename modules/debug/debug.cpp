@@ -9,7 +9,9 @@ Debug::Debug(std::string portAndPin, bool bstate) :
 
 void Debug::update(void)
 {
-	this->debugPin->set(bState);
+	static bool value;
+	value = !value;
+	this->debugPin->set(value);
 }
 
 void Debug::slowUpdate(void)

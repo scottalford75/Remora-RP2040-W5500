@@ -2,6 +2,7 @@
 #define REMORA_H
 #pragma pack(push, 1)
 
+#include "configuration.h"
 
 typedef union
 {
@@ -21,9 +22,6 @@ typedef union
   };
 } rxData_t;
 
-extern volatile rxData_t rxData;
-
-
 typedef union
 {
   // this allow structured access to the out going SPI data without having to move it
@@ -41,8 +39,22 @@ typedef union
   };
 } txData_t;
 
-extern volatile txData_t txData;
+typedef struct {
+    rxData_t rxBuffers[2]; // Two buffers for rxData_t
+    int currentRxBuffer;   // Index of the current rxData_t buffer
+} RxPingPongBuffer;
 
+typedef struct {
+    txData_t txBuffers[2]; // Two buffers for txData_t
+    int currentTxBuffer;   // Index of the current txData_t buffer
+} TxPingPongBuffer;
+
+extern void initRxPingPongBuffer(RxPingPongBuffer* buffer);
+extern void initTxPingPongBuffer(TxPingPongBuffer* buffer);
+extern void swapRxBuffers(RxPingPongBuffer* buffer);
+extern void swapTxBuffers(TxPingPongBuffer* buffer);
+extern rxData_t* getCurrentRxBuffer(RxPingPongBuffer* buffer);
+extern txData_t* getCurrentTxBuffer(TxPingPongBuffer* buffer);
 
 #pragma pack(pop)
 #endif

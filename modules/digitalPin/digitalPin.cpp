@@ -25,19 +25,19 @@ void createDigitalPin()
     }
     else inv = false;
 
-    ptrOutputs = &rxData.outputs;
-    ptrInputs = &txData.inputs;
+    //ptrOutputs = &pruRxData->outputs;
+    //ptrInputs = &pruTxData->inputs;
 
     printf("Make Digital %s at pin %s\n", mode, pin);
 
     if (!strcmp(mode,"Output"))
     {
-        Module* digitalPin = new DigitalPin(*ptrOutputs, 1, pin, dataBit, inv, mod);
+        Module* digitalPin = new DigitalPin(1, pin, dataBit, inv, mod);
         servoThread->registerModule(digitalPin);
     }
     else if (!strcmp(mode,"Input"))
     {
-        Module* digitalPin = new DigitalPin(*ptrInputs, 0, pin, dataBit, inv, mod);
+        Module* digitalPin = new DigitalPin(0, pin, dataBit, inv, mod);
         servoThread->registerModule(digitalPin);
     }
     else
@@ -62,8 +62,8 @@ void loadStaticIO()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-DigitalPin::DigitalPin(volatile uint32_t &ptrData, int mode, std::string portAndPin, int bitNumber, bool invert, int modifier) :
-	ptrData(&ptrData),
+//DigitalPin::DigitalPin(volatile uint32_t &ptrData, int mode, std::string portAndPin, int bitNumber, bool invert, int modifier) :
+DigitalPin::DigitalPin(int mode, std::string portAndPin, int bitNumber, bool invert, int modifier) :
     mode(mode),
 	portAndPin(portAndPin),
 	bitNumber(bitNumber),
@@ -72,13 +72,15 @@ DigitalPin::DigitalPin(volatile uint32_t &ptrData, int mode, std::string portAnd
 {
 	this->pin = new Pin(this->portAndPin, this->mode, this->modifier);		// Input 0x0, Output 0x1
 	this->mask = 1 << this->bitNumber;
-    printf("ptrData = %x\n", ptrData);
+    //printf("ptrData = %x\n", ptrData); //can no longer just use a single pointer.
 }
 
 
 void DigitalPin::update()
 {
 	bool pinState;
+    rxData_t* currentRxPacket = getCurrentRxBuffer(&rxPingPongBuffer);
+	txData_t* currentTxPacket = getCurrentTxBuffer(&txPingPongBuffer);
 
 	if (this->mode == 0x0)									// the pin is configured as an input
 	{
@@ -90,16 +92,16 @@ void DigitalPin::update()
 
 		if (pinState == 1)								// input is high
 		{
-			*(this->ptrData) |= this->mask;
+			currentTxPacket->inputs |= this->mask;
 		}
 		else											// input is low
 		{
-			*(this->ptrData) &= ~this->mask;
+			currentTxPacket->inputs &= ~this->mask;
 		}
 	}
 	else												// the pin is configured as an output
 	{
-		pinState = *(this->ptrData) & this->mask;		// get the value of the bit in the data source
+		pinState = currentRxPacket->outputs & this->mask;		// get the value of the bit in the data source
 		if(this->invert)
 		{
 			pinState = !pinState;

@@ -9,6 +9,8 @@ project(Remora-RP2040-W5500)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
+set(PICO_COPY_TO_RAM 1)
+
 #set(PICO_DEOPTIMIZED_DEBUG 1)
 
 # Initialize the SDK
@@ -95,7 +97,7 @@ target_link_libraries(remora
         LWIP_FILES
         )
 
-pico_enable_stdio_usb(remora 0)
-pico_enable_stdio_uart(remora 1)
+pico_enable_stdio_usb(remora 1)
+pico_enable_stdio_uart(remora 0)
         
 pico_add_extra_outputs(remora)
