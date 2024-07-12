@@ -64,7 +64,7 @@ add_executable(remora
         tftpserver.cpp
         #boardconfig.cpp
         ${CMAKE_SOURCE_DIR}/interrupt/interrupt.cpp
-        ${CMAKE_SOURCE_DIR}/thread/timerinterrupt.cpp
+        ${CMAKE_SOURCE_DIR}/thread/timerInterrupt.cpp
         ${CMAKE_SOURCE_DIR}/thread/timer.cpp
         ${CMAKE_SOURCE_DIR}/thread/pruThread.cpp
         ${CMAKE_SOURCE_DIR}/drivers/pin/pin.cpp
