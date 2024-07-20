@@ -92,7 +92,7 @@ void Stepgen::makePulses()
 		this->DDSaccumulator += this->DDSaddValue;           	  				// Update the DDS accumulator with the new add value
 		stepNow ^= this->DDSaccumulator;                          				// Test for changes in the low half of the DDS accumulator
 		stepNow &= (1L << this->stepBit);                         				// Check for the step bit
-		this->rawCount = this->DDSaccumulator >> this->stepBit;   				// Update the position raw count
+		//this->rawCount = this->DDSaccumulator >> this->stepBit;   				// Update the position raw count
 
 		if (this->DDSaddValue > 0)												// The sign of the DDS add value indicates the desired direction
 		{
@@ -108,7 +108,6 @@ void Stepgen::makePulses()
 			this->directionPin->set(this->isForward);             		    // Set direction pin
 			this->stepPin->set(true);										// Raise step pin - A4988 / DRV8825 stepper drivers only need 200ns setup time
 			txData->jointFeedback[jointNumber] = this->DDSaccumulator;       // Update position feedback via pointer to the data receiver
-			//txData->jointFeedback[jointNumber] = 0;
 			this->isStepping = true;
 		}
 	}
