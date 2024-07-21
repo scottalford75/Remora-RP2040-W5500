@@ -1,0 +1,79 @@
+{
+	"Board": "PICOBOB",
+	"Modules":[
+	{
+	"Thread": "Servo",
+	"Type": "Blink",
+		"Comment":			"Blinky",
+		"Pin":				"GP07",
+		"Frequency": 		2
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"X - Joint 0 step generator",
+		"Joint Number":		0,
+		"Step Pin": 		"GP22",
+		"Direction Pin": 	"GP09"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"Y - Joint 1 step generator",
+		"Joint Number":		1,
+		"Step Pin": 		"GP23",
+		"Direction Pin": 	"GP10"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"Z - Joint 2 step generator",
+		"Joint Number":		2,
+		"Step Pin": 		"GP24",
+		"Direction Pin": 	"GP11"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"A - Joint 3 step generator",
+		"Joint Number":		3,
+		"Step Pin": 		"GP25",
+		"Direction Pin": 	"GP12"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"B - Joint 4 step generator",
+		"Joint Number":		4,
+		"Step Pin": 		"GP26",
+		"Direction Pin": 	"GP13"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"X_Limit",
+		"Pin":				"GP11",
+		"Mode":				"Input",
+		"Data Bit":			0,
+		"Invert":			"False"
+	}	,
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"Y_Limit",
+		"Pin":				"GP12",
+		"Mode":				"Input",
+		"Data Bit":			1,
+		"Invert":			"True"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"Z_Limit",
+		"Pin":				"GP13",
+		"Mode":				"Input",
+		"Data Bit":			2,
+		"Invert":			"False"
+	}
+	]
+}

@@ -13,7 +13,7 @@
 #define JSON_BUFF_SIZE	    10000			// Jason dynamic buffer size
 
 #define JOINTS			    6				// Number of joints - set this the same as LinuxCNC HAL compenent. Max 8 joints
-#define VARIABLES           2             	// Number of command values - set this the same as the LinuxCNC HAL compenent
+#define VARIABLES           4             	// Number of command values - set this the same as the LinuxCNC HAL compenent
 
 #define PRU_DATA		    0x64617461 	    // "data" SPI payload
 #define PRU_READ            0x72656164      // "read" SPI payload

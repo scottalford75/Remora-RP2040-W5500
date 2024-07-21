@@ -51,6 +51,7 @@ Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string step, std::str
 	this->stepPin = new Pin(this->step, OUTPUT);
 	this->directionPin = new Pin(this->direction, OUTPUT);
 	this->DDSaccumulator = 0;
+	this->rawCount = 0;
 	this->frequencyScale = (float)(1 << this->stepBit) / (float)threadFreq;
 	this->mask = 1 << this->jointNumber;
 	this->isEnabled = false;
@@ -78,15 +79,14 @@ void Stepgen::makePulses()
 {
 	int32_t stepNow = 0;
 
-	rxData_t* rxData = getCurrentRxBuffer(&rxPingPongBuffer);
-	txData_t* txData = getCurrentTxBuffer(&txPingPongBuffer);
+	this->rxData = getCurrentRxBuffer(&rxPingPongBuffer);
+	this->txData = getCurrentTxBuffer(&txPingPongBuffer);
 
 	this->isEnabled = ((rxData->jointEnable & this->mask) != 0);
 
 	if (this->isEnabled == true)  												// this Step generator is enables so make the pulses
 	{
-		this->frequencyCommand = rxData->jointFreqCmd[jointNumber];             // Get the latest frequency command via pointer to the data source
-		//this->frequencyCommand = 60000;
+		this->frequencyCommand = rxData->jointFreqCmd[this->jointNumber];             // Get the latest frequency command via pointer to the data source
 		this->DDSaddValue = this->frequencyCommand * this->frequencyScale;		// Scale the frequency command to get the DDS add value
 		stepNow = this->DDSaccumulator;                           				// Save the current DDS accumulator value
 		this->DDSaccumulator += this->DDSaddValue;           	  				// Update the DDS accumulator with the new add value
@@ -98,16 +98,27 @@ void Stepgen::makePulses()
 		{
 			this->isForward = true;
 		}
-		else //if (this->DDSaddValue < 0)
+		else
 		{
 			this->isForward = false;
 		}
 
 		if (stepNow)
 		{
-			this->directionPin->set(this->isForward);             		    // Set direction pin
-			this->stepPin->set(true);										// Raise step pin - A4988 / DRV8825 stepper drivers only need 200ns setup time
-			txData->jointFeedback[jointNumber] = this->DDSaccumulator;       // Update position feedback via pointer to the data receiver
+			this->directionPin->set(this->isForward);             		    	// Set direction pin
+			this->stepPin->set(true);											// Raise step pin
+			//txData->jointFeedback[this->jointNumber] = this->DDSaccumulator;    // Update position feedback via pointer to the data receiver
+			///*
+			if (this->isForward)
+            {
+                ++this->rawCount;
+            }
+            else
+            {
+                --this->rawCount;
+            }
+            txData->jointFeedback[this->jointNumber] = this->rawCount;	
+			//*/
 			this->isStepping = true;
 		}
 	}
