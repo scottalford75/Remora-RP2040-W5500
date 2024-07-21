@@ -8,7 +8,7 @@ https://github.com/scottalford75/Remora-RP2040-W5500/tree/main/firmware
 
 Upload the remora-rp2040-2.0.0.uf2 file to your pico.
 
-To configure the linuxcnc hal module and configs use the filse here:
+To configure the linuxcnc hal module and configs use the files here:
 
 Hal Files (run halcompile on these)
 https://github.com/scottalford75/Remora-RT1052-cpp/tree/main/LinuxCNC/components/Remora-eth

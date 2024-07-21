@@ -107,8 +107,6 @@ void Stepgen::makePulses()
 		{
 			this->directionPin->set(this->isForward);             		    	// Set direction pin
 			this->stepPin->set(true);											// Raise step pin
-			//txData->jointFeedback[this->jointNumber] = this->DDSaccumulator;    // Update position feedback via pointer to the data receiver
-			///*
 			if (this->isForward)
             {
                 ++this->rawCount;
@@ -118,8 +116,6 @@ void Stepgen::makePulses()
                 --this->rawCount;
             }
             txData->jointFeedback[this->jointNumber] = this->rawCount;	
-			//*/
-			this->isStepping = true;
 		}
 	}
 
@@ -130,7 +126,6 @@ void Stepgen::makePulses()
 void Stepgen::stopPulses()
 {
 	this->stepPin->set(false);	// Reset step pin
-	this->isStepping = false;
 }
 
 
