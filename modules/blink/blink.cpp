@@ -14,8 +14,7 @@ void createBlink()
     int freq = module["Frequency"];
 
     // create the blink module
-    Module* blink = new Blink(pin, servo_freq, freq);
-    servoThread->registerModule(blink);
+    Blink::singleton().addBlink(pin, servo_freq, freq);
 }
 
 /***********************************************************************
@@ -31,15 +30,18 @@ void loadStaticBlink()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-Blink::Blink(std::string portAndPin, uint32_t threadFreq, uint32_t freq)
+void Blink::addBlink(std::string portAndPin, uint32_t threadFreq, uint32_t freq)
 {
+	if(!blinkPin) {
+		this->periodCount = threadFreq / freq;
+		this->blinkCount = 0;
+		this->bState = false;
 
-	this->periodCount = threadFreq / freq;
-	this->blinkCount = 0;
-	this->bState = false;
-
-	this->blinkPin = new Pin(portAndPin, OUTPUT);
-	this->blinkPin->set(bState);
+		this->blinkPin = new Pin(portAndPin, OUTPUT);
+		this->blinkPin->set(bState);
+	} else {
+		printf("Ignoring additional blink pin, already have one.\n");
+	}
 }
 
 void Blink::update(void)
@@ -55,4 +57,15 @@ void Blink::update(void)
 void Blink::slowUpdate(void)
 {
 	return;
+}
+
+
+Blink& Blink::singleton() {
+	static Blink* blink = nullptr;
+	if(!blink) {
+		blink = new Blink();
+		// Not used
+        // servoThread->registerModule(blink);
+	}
+	return *blink;
 }

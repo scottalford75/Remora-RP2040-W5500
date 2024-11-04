@@ -15,23 +15,24 @@ void loadStaticIO(void);
 class DigitalPin : public Module
 {
 	private:
+		static constexpr int MAXPINS = 32;
+		struct Item {
+			int bitNumber;				// location in the data source
+			bool invert;
+			int mask;
+			int mode;
+			int modifier;
+			Pin *pin;
+		};
+		Item items[MAXPINS];
+		int npins = 0;
 
-		volatile uint32_t *ptrData; 	// pointer to the data source
-		int bitNumber;				// location in the data source
-		bool invert;
-		int mask;
-
-		int mode;
-        int modifier;
-		std::string portAndPin;
-
-		Pin *pin;
 
 	public:
-
-        DigitalPin(int, std::string, int, bool, int);
+        void addPin(int, std::string, int, bool, int);
 		virtual void update(void);
 		virtual void slowUpdate(void);
+		static DigitalPin& singleton();
 };
 
 #endif

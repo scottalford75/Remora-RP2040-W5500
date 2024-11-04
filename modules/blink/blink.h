@@ -21,14 +21,16 @@ class Blink : public Module
 		uint32_t 	periodCount;
 		uint32_t 	blinkCount;
 
-		Pin *blinkPin;	// class object members - Pin objects
+		Pin *blinkPin = nullptr;	// class object members - Pin objects
 
 	public:
 
-		Blink(std::string, uint32_t, uint32_t);
+		void addBlink(std::string, uint32_t, uint32_t);
 
 		virtual void update(void);
 		virtual void slowUpdate(void);
+
+		static Blink& singleton();
 };
 
 #endif

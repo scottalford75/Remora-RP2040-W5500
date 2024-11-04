@@ -396,23 +396,21 @@ void loadStaticConfig()
     //loadStaticBlink();
 	for (int i = 0; i < sizeof(BlinkConfigs)/sizeof(*BlinkConfigs); i++) {
         printf("\nMake Blink at pin %s\n", BlinkConfigs[i].Comment, BlinkConfigs[i].Pin, BlinkConfigs[i].Freq);
-        Module* blink = new Blink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
-        servoThread->registerModule(blink);
+        Blink::singleton().addBlink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
     }
 
     //loadStaticIO();
     //Digital Outputs
+    DigitalPin& digital_pins = DigitalPin::singleton();
     for (int i = 0; i < sizeof(DOConfigs)/sizeof(*DOConfigs); i++) {
         printf("\nCreate digital output for %s\n", DOConfigs[i].Comment);
-        Module* digitalOutput = new DigitalPin(1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalOutput);
+        digital_pins.addPin(1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
     }
   
     //Digital Inputs
     for (int i = 0; i < sizeof(DIConfigs)/sizeof(*DIConfigs); i++) {
         printf("\nCreate digital input for %s\n", DIConfigs[i].Comment);
-        Module* digitalInput = new DigitalPin(0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalInput);
+        digital_pins.addPin(0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
     }
 
     // Base thread modules
@@ -870,11 +868,14 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
             //feedback data will now go into the alternate buffer
             while (baseThread->semaphore);
                 baseThread->semaphore = true;
+            while (servoThread->semaphore);
+                servoThread->semaphore = true;
             //don't need to wait for the servo thread.
 
             swapTxBuffers(&txPingPongBuffer);
 
             baseThread->semaphore = false;            
+            servoThread->semaphore = false;
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_DATA;
@@ -886,12 +887,15 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
             //if it is a write, then both the RX and TX buffers need to be changed.
             while (baseThread->semaphore);
                 baseThread->semaphore = true;
+            while (servoThread->semaphore);
+                servoThread->semaphore = true;
             //don't need to wait for the servo thread.
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);
             //frequency command will now come from the new data
             swapRxBuffers(&rxPingPongBuffer);
             baseThread->semaphore = false;               
+            servoThread->semaphore = false;
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_ACKNOWLEDGE;

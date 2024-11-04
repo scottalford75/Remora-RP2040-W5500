@@ -34,7 +34,9 @@ class Pin
         Pin(std::string, int, int);
 
         void configPin();
-
+        uint16_t getPinNumber() {
+            return pin;
+        }
         inline bool get()
         {
             return gpio_get(this->pin);
@@ -42,14 +44,7 @@ class Pin
 
         inline void set(bool value)
         {
-            if (value)
-            {
-                gpio_put(this->pin, 1);
-            }
-            else
-            {
-                gpio_put(this->pin, 0);
-            }
+            gpio_put(pin, value);
         }
 };
 

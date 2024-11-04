@@ -1,6 +1,9 @@
 #include "digitalPin.h"
 //#include "../boardconfig.h"
 
+
+// Only ever 1!
+
 /***********************************************************************
                 MODULE CONFIGURATION AND CREATION FROM JSON     
 ************************************************************************/
@@ -30,19 +33,12 @@ void createDigitalPin()
 
     printf("Make Digital %s at pin %s\n", mode, pin);
 
-    if (!strcmp(mode,"Output"))
-    {
-        Module* digitalPin = new DigitalPin(1, pin, dataBit, inv, mod);
-        servoThread->registerModule(digitalPin);
-    }
-    else if (!strcmp(mode,"Input"))
-    {
-        Module* digitalPin = new DigitalPin(0, pin, dataBit, inv, mod);
-        servoThread->registerModule(digitalPin);
-    }
-    else
-    {
-        printf("Error - incorrectly defined Digital Pin\n");
+ 
+    int mode_code = !strcmp(mode, "Output") ? 1 : !strcmp(mode, "Input") ? 0 : -1;
+    if(mode_code != -1) {
+        DigitalPin::singleton().addPin(mode_code, pin, dataBit, inv, mod);
+    } else {
+        printf("Invalid pin mode %s, expect 'Input' or 'Output'\n", mode);
     }
 
 }
@@ -62,55 +58,55 @@ void loadStaticIO()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-//DigitalPin::DigitalPin(volatile uint32_t &ptrData, int mode, std::string portAndPin, int bitNumber, bool invert, int modifier) :
-DigitalPin::DigitalPin(int mode, std::string portAndPin, int bitNumber, bool invert, int modifier) :
-    mode(mode),
-	portAndPin(portAndPin),
-	bitNumber(bitNumber),
-    invert(invert),
-	modifier(modifier)
+void DigitalPin::addPin(int mode, std::string portAndPin, int bitNumber, bool invert, int modifier)
 {
-	this->pin = new Pin(this->portAndPin, this->mode, this->modifier);		// Input 0x0, Output 0x1
-	this->mask = 1 << this->bitNumber;
-    //printf("ptrData = %x\n", ptrData); //can no longer just use a single pointer.
+    assert(npins < MAXPINS);
+    Item& pin = items[npins];
+    pin.mode = mode;
+    pin.bitNumber = bitNumber;
+    pin.invert = invert;
+    pin.modifier = modifier;
+    pin.pin = new Pin(portAndPin, mode, modifier);
+    pin.mask = 1 << bitNumber;
+    npins++;
 }
 
 
 void DigitalPin::update()
 {
-	bool pinState;
     rxData_t* currentRxPacket = getCurrentRxBuffer(&rxPingPongBuffer);
-	txData_t* currentTxPacket = getCurrentTxBuffer(&txPingPongBuffer);
-
-	if (this->mode == 0x0)									// the pin is configured as an input
-	{
-		pinState = this->pin->get();
-		if(this->invert)
-		{
-			pinState = !pinState;
-		}
-
-		if (pinState == 1)								// input is high
-		{
-			currentTxPacket->inputs |= this->mask;
-		}
-		else											// input is low
-		{
-			currentTxPacket->inputs &= ~this->mask;
-		}
-	}
-	else												// the pin is configured as an output
-	{
-		pinState = currentRxPacket->outputs & this->mask;		// get the value of the bit in the data source
-		if(this->invert)
-		{
-			pinState = !pinState;
-		}
-		this->pin->set(pinState);			// simple conversion to boolean
-	}
+    txData_t* currentTxPacket = getCurrentTxBuffer(&txPingPongBuffer);
+    
+    for(int i = 0; i < npins; i++) {
+        const Item& item = items[i];
+        if(item.mode == 0) {
+            bool pinState;
+            pinState = item.pin->get();
+            if(item.invert) pinState = !pinState;
+            if(pinState) {
+                currentTxPacket->inputs |= item.mask;
+            } else {
+                currentTxPacket->inputs &= ~item.mask; 
+            }
+        } else {
+            bool pinState = (currentRxPacket->outputs & item.mask) != 0;
+            if(item.invert) pinState = !pinState;
+            item.pin->set(pinState);
+        }
+    }
 }
 
 void DigitalPin::slowUpdate()
 {
-	return;
+
+}
+
+DigitalPin& DigitalPin::singleton() {
+    static DigitalPin* pin_module = nullptr;
+    if(!pin_module) {
+        pin_module = new DigitalPin();
+        // Not used.
+        // servoThread->registerModule(pin_module);
+    }
+    return *pin_module;
 }

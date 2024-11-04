@@ -99,7 +99,7 @@ target_link_libraries(remora
         )
 
  # disable usb output, enable uart output        
-pico_enable_stdio_usb(remora 0)
-pico_enable_stdio_uart(remora 1)
+pico_enable_stdio_usb(remora 1)
+pico_enable_stdio_uart(remora 0)
         
 pico_add_extra_outputs(remora)

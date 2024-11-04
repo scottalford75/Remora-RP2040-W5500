@@ -32,6 +32,9 @@ class Stepgen : public Module
   	int32_t	DDSaddValue;		  	    // DDS accumulator add vdd value
     int32_t stepBit;                // position in the DDS accumulator that triggers a step pulse
 
+    int32_t threadFreq;
+    int32_t bresenhamD;
+
     rxData_t* rxData;               // pointer to ping-pong buffer
 	  txData_t* txData;               // pointer to ping-pong buffer
 
@@ -47,6 +50,8 @@ class Stepgen : public Module
     void makePulses();
     void stopPulses();
     void setEnabled(bool);
+
+    static void consolidated_stepgen();
 };
 
 
