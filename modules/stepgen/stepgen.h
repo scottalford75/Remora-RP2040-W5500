@@ -11,7 +11,6 @@
 
 
 void createStepgen(void);
-void loadStaticStepgen(void);
 
 class Stepgen : public Module
 {

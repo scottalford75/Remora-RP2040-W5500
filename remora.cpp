@@ -44,7 +44,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "configuration.h"
 #include "remora.h"
-#include "boardconfig.h"
 
 #include "crc32.h"
 
@@ -53,7 +52,7 @@ extern "C"
 {
 #include "wizchip_conf.h"
 #include "socket.h"
-#include "w5x00_spi.h"
+#include "wizchip_spi.h"
 #include "w5x00_lwip.h"
 }
 
@@ -113,7 +112,6 @@ uint32_t servo_freq = PRU_SERVOFREQ;
 volatile bool PRUreset;
 bool configError = false;
 bool threadsRunning = false;
-bool staticConfig = false;
 
 uint8_t noDataCount;
 
@@ -267,54 +265,29 @@ void moveJson()
 }
 
 
-void jsonFromFlash(std::string json)
+void jsonFromFlash()
 {
-    int c;
-    uint32_t i = 0;
-    uint32_t jsonLength;
-
     printf("\n1. Loading JSON configuration file from Flash memory\n");
 
     // read byte 0 to determine length to read
-    jsonLength = *(uint32_t*)(XIP_BASE + JSON_STORAGE_ADDRESS);
-
+    uint32_t jsonLength = *(uint32_t*)(XIP_BASE + JSON_STORAGE_ADDRESS);
     if (jsonLength == 0xFFFFFFFF)
     {
     	printf("Flash storage location is empty - no config file\n");
     	printf("Using default configuration\n\n");
-
-        //staticConfig = true;
-
-        jsonLength = sizeof(defaultConfig);
-
-    	json.resize(jsonLength);
-
-		for (i = 0; i < jsonLength; i++)
-		{
-			c = defaultConfig[i];
-			strJson.push_back(c);
-		}
+        strJson = defaultConfig;
     }
     else
     {
-		json.resize(jsonLength);
-
-		for (i = 0; i < jsonLength; i++)
-		{
-			c = *(uint8_t*)(XIP_BASE + JSON_STORAGE_ADDRESS + 4 + i);
-			strJson.push_back(c);
-		}
-		printf("\n%s\n\n", json.c_str());
-
-        staticConfig = false;
+        const char *p = (const char*)(XIP_BASE + JSON_STORAGE_ADDRESS + 4);
+        strJson = std::string(p, p+jsonLength);
     }
+    printf("\n%s\n\n", strJson.c_str());
 }
 
 
 void deserialiseJSON()
 {
-    if(staticConfig) return;
-
     printf("\n2. Parsing JSON configuration file\n");
 
     const char *json = strJson.c_str();
@@ -373,60 +346,6 @@ void configThreads()
             servo_freq = freq;
             printf("Setting SERVO thread frequency to %d\n", servo_freq);
         }
-    }
-}
-
-
-void loadStaticConfig()
-{
-    printf("\n4. Loading static configuration\n");
-
-    // Servo thread modules
-
-    //rxData_t* pruRxData = currentRxPacket;
-    //txData_t* pruTxData = currentTxPacket;
-
-    rxData_t* pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
-	txData_t* pruTxData = getCurrentTxBuffer(&txPingPongBuffer);
-    
-    // Ethernet communication monitoring
-	comms = new RemoraComms();
-	servoThread->registerModule(comms);
-
-    //loadStaticBlink();
-	for (int i = 0; i < sizeof(BlinkConfigs)/sizeof(*BlinkConfigs); i++) {
-        printf("\nMake Blink at pin %s\n", BlinkConfigs[i].Comment, BlinkConfigs[i].Pin, BlinkConfigs[i].Freq);
-        Module* blink = new Blink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
-        servoThread->registerModule(blink);
-    }
-
-    //loadStaticIO();
-    //Digital Outputs
-    for (int i = 0; i < sizeof(DOConfigs)/sizeof(*DOConfigs); i++) {
-        printf("\nCreate digital output for %s\n", DOConfigs[i].Comment);
-        Module* digitalOutput = new DigitalPin(1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalOutput);
-    }
-  
-    //Digital Inputs
-    for (int i = 0; i < sizeof(DIConfigs)/sizeof(*DIConfigs); i++) {
-        printf("\nCreate digital input for %s\n", DIConfigs[i].Comment);
-        Module* digitalInput = new DigitalPin(0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalInput);
-    }
-
-    // Base thread modules
-    //loadStaticStepgen();
-    for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
-        printf("\nCreate step generator for Joint %d\n", i);
-        //I don't think these next 3 lines do anything anymore.
-        //ptrJointFreqCmd[i] = &pruRxData->jointFreqCmd[i];
-        //ptrJointFeedback[i] = &pruTxData->jointFeedback[i];
-        //ptrJointEnable = &pruRxData->jointEnable;
- 
-        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT);
-        baseThread->registerModule(stepgen);
-        baseThread->registerModulePost(stepgen);
     }
 }
 
@@ -526,19 +445,12 @@ void core1_entry()
                 }
                 prevState = currentState;
 
-                jsonFromFlash(strJson);
+                jsonFromFlash();
                 deserialiseJSON();
                 configThreads();
                 createThreads();
                 //debugThreadHigh();
-                if (staticConfig)
-                {
-                    loadStaticConfig();
-                }
-                else
-                {
-                    loadModules();
-                }
+                loadModules();
                 //debugThreadLow();
 
                 currentState = ST_START;

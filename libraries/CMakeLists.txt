@@ -94,30 +94,6 @@ target_include_directories(DNS_FILES PUBLIC
         ${WIZNET_DIR}/Internet/DNS
         )
 
-# FTP Client
-add_library(FTPCLIENT_FILES STATIC)
-
-target_sources(FTPCLIENT_FILES PUBLIC
-        ${WIZNET_DIR}/Internet/FTPClient/ftpc.c
-        )
-
-target_include_directories(FTPCLIENT_FILES PUBLIC
-        ${WIZNET_DIR}/Ethernet
-        ${WIZNET_DIR}/Internet/FTPClient
-        )
-
-# FTP Server
-add_library(FTPSERVER_FILES STATIC)
-
-target_sources(FTPSERVER_FILES PUBLIC
-        ${WIZNET_DIR}/Internet/FTPServer/ftpd.c
-        )
-
-target_include_directories(FTPSERVER_FILES PUBLIC
-        ${WIZNET_DIR}/Ethernet
-        ${WIZNET_DIR}/Internet/FTPServer
-        )
-
 # HTTP Server
 add_library(HTTPSERVER_FILES STATIC)
 

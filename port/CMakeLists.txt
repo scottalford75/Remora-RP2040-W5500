@@ -1,9 +1,14 @@
 # ioLibrary_Driver
 add_library(IOLIBRARY_FILES STATIC)
 
+pico_generate_pio_header(IOLIBRARY_FILES
+        ${PORT_DIR}/ioLibrary_Driver/src/wizchip_qspi_pio.pio
+        )
+
 target_sources(IOLIBRARY_FILES PUBLIC
-        ${PORT_DIR}/ioLibrary_Driver/src/w5x00_spi.c
-        ${PORT_DIR}/ioLibrary_Driver/src/w5x00_gpio_irq.c
+        ${PORT_DIR}/ioLibrary_Driver/src/wizchip_spi.c
+        ${PORT_DIR}/ioLibrary_Driver/src/wizchip_qspi_pio.c
+        ${PORT_DIR}/ioLibrary_Driver/src/wizchip_gpio_irq.c
         )
 
 target_include_directories(IOLIBRARY_FILES PUBLIC
@@ -16,6 +21,7 @@ target_link_libraries(IOLIBRARY_FILES PRIVATE
         pico_stdlib
         hardware_spi
         hardware_dma
+        hardware_pio
         hardware_clocks
         )
 

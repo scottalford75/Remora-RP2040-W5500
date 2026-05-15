@@ -17,17 +17,95 @@ set(PICO_COPY_TO_RAM 1)
 # Initialize the SDK
 pico_sdk_init()
 
-## Wiznet stuff
-# Set ethernet chip
-set(WIZNET_CHIP W5500)
+# Set board
+set(BOARD_NAME W5500_EVB_PICO CACHE STRING "WIZnet board selection")
+set_property(CACHE BOARD_NAME PROPERTY STRINGS
+    WIZnet_Ethernet_HAT
+    W5100S_EVB_PICO
+    W5500_EVB_PICO
+    W55RP20_EVB_PICO
+    W6100_EVB_PICO
+    W6300_EVB_PICO
+    W5100S_EVB_PICO2
+    W5500_EVB_PICO2
+    W6100_EVB_PICO2
+    W6300_EVB_PICO2
+)
 
-if(${WIZNET_CHIP} STREQUAL W5100S)
+if(${BOARD_NAME} STREQUAL WIZnet_Ethernet_HAT)
+    #set(PICO_PLATFORM rp2350) #If you are using WIZnet_ethernet_HAT with Pico2, uncomment it.
+    set(WIZNET_CHIP W5100S)
     add_definitions(-D_WIZCHIP_=W5100S)
-elseif(${WIZNET_CHIP} STREQUAL W5500)
+    add_definitions(-DDEVICE_BOARD_NAME=WIZnet_Ethernet_HAT)
+
+elseif(${BOARD_NAME} STREQUAL W5100S_EVB_PICO)
+    set(WIZNET_CHIP W5100S)
+    add_definitions(-D_WIZCHIP_=W5100S)
+    add_definitions(-DDEVICE_BOARD_NAME=W5100S_EVB_PICO)
+
+elseif(${BOARD_NAME} STREQUAL W5500_EVB_PICO)
+    set(WIZNET_CHIP W5500)
     add_definitions(-D_WIZCHIP_=W5500)
+    add_definitions(-DDEVICE_BOARD_NAME=W5500_EVB_PICO)
+
+elseif(${BOARD_NAME} STREQUAL W55RP20_EVB_PICO)
+    set(WIZNET_CHIP W5500)
+    add_definitions(-D_WIZCHIP_=W5500)
+    add_definitions(-DDEVICE_BOARD_NAME=W55RP20_EVB_PICO)
+
+elseif(${BOARD_NAME} STREQUAL W6100_EVB_PICO)
+    set(WIZNET_CHIP W6100)
+    add_definitions(-D_WIZCHIP_=W6100)
+    add_definitions(-DDEVICE_BOARD_NAME=W6100_EVB_PICO)
+
+elseif(${BOARD_NAME} STREQUAL W6300_EVB_PICO)
+    set(WIZNET_CHIP W6300)
+    add_definitions(-D_WIZCHIP_=W6300)
+    add_definitions(-DDEVICE_BOARD_NAME=W6300_EVB_PICO)
+# Set QSPI MODE for W6300
+    set(WIZCHIP_QSPI_MODE QSPI_QUAD_MODE)
+    # set(WIZCHIP_QSPI_MODE QSPI_DUAL_MODE)
+    # set(WIZCHIP_QSPI_MODE QSPI_SINGLE_MODE)
+
+    add_definitions(-D_WIZCHIP_QSPI_MODE_=${WIZCHIP_QSPI_MODE})
+
+elseif(${BOARD_NAME} STREQUAL W5100S_EVB_PICO2)
+    set(PICO_PLATFORM rp2350)
+    set(WIZNET_CHIP W5100S)
+    add_definitions(-D_WIZCHIP_=W5100S)
+    add_definitions(-DDEVICE_BOARD_NAME=W5100S_EVB_PICO2)
+
+elseif(${BOARD_NAME} STREQUAL W5500_EVB_PICO2)
+    set(PICO_PLATFORM rp2350)
+    set(WIZNET_CHIP W5500)
+    add_definitions(-D_WIZCHIP_=W5500)
+    add_definitions(-DDEVICE_BOARD_NAME=W5500_EVB_PICO2)
+
+elseif(${BOARD_NAME} STREQUAL W6100_EVB_PICO2)
+    set(PICO_PLATFORM rp2350)
+    set(WIZNET_CHIP W6100)
+    add_definitions(-D_WIZCHIP_=W6100)
+    add_definitions(-DDEVICE_BOARD_NAME=W6100_EVB_PICO2)
+
+elseif(${BOARD_NAME} STREQUAL W6300_EVB_PICO2)
+    set(PICO_PLATFORM rp2350)
+    set(WIZNET_CHIP W6300)
+    add_definitions(-D_WIZCHIP_=W6300)
+    add_definitions(-DDEVICE_BOARD_NAME=W6300_EVB_PICO2)
+# Set QSPI MODE for W6300
+    # Set QSPI MODE for W6300
+    set(WIZCHIP_QSPI_MODE QSPI_QUAD_MODE)
+    # set(WIZCHIP_QSPI_MODE QSPI_DUAL_MODE)
+    # set(WIZCHIP_QSPI_MODE QSPI_SINGLE_MODE)
+
+    add_definitions(-D_WIZCHIP_QSPI_MODE_=${WIZCHIP_QSPI_MODE})
+
 else()
-    message(FATAL_ERROR "WIZNET_CHIP is wrong = ${WIZNET_CHIP}")
+    message(FATAL_ERROR "BOARD_NAME is wrong = ${BOARD_NAME}")
 endif()
+
+message(STATUS "BOARD_NAME = ${BOARD_NAME}")
+message(STATUS "WIZNET_CHIP = ${WIZNET_CHIP}")
 
 if(NOT DEFINED WIZNET_DIR)
     set(WIZNET_DIR ${CMAKE_SOURCE_DIR}/libraries/ioLibrary_Driver)
@@ -89,6 +167,7 @@ target_link_libraries(remora
         pico_stdlib
         pico_multicore
         hardware_spi
+        hardware_pio
         hardware_dma
         hardware_pwm
         hardware_flash
