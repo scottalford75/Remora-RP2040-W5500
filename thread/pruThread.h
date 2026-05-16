@@ -27,8 +27,6 @@ class pruThread
 		vector<Module*>::iterator iter;
 
 	public:
-
-		bool				semaphore;
 		bool				execute;
 
 		pruThread(uint8_t slice, uint32_t frequency);

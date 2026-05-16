@@ -1,5 +1,5 @@
+#include "hardware/gpio.h"
 #include "hardware/irq.h"
-//#include "hardware/pwm.h"
 #include "hardware/timer.h"
 
 #include <stdio.h>
@@ -10,7 +10,6 @@
 #include "timer.h"
 #include "pruThread.h"
 
-extern "C" void PWM_Wrap_Handler();
 extern "C" void PWM_Wrap_Handler0();
 extern "C" void PWM_Wrap_Handler1();
 
@@ -51,6 +50,8 @@ void pruTimer::startTimer(void)
     printf("    actual period = %d\n", period);
 
     if (this->slice == 0){
+        gpio_init(6);
+        gpio_set_dir(6, 1);
         hw_set_bits(&timer_hw->inte, 1u << slice);//use alarm 0
         irq_set_exclusive_handler(TIMER_IRQ_0, PWM_Wrap_Handler0);
         irq_set_enabled(TIMER_IRQ_0, true);
