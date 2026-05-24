@@ -10,7 +10,6 @@
 
 
 void createDigitalPin(void);
-void loadStaticIO(void);
 
 class DigitalPin : public Module
 {

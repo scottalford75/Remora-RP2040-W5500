@@ -14,17 +14,8 @@ void createBlink()
     int freq = module["Frequency"];
 
     // create the blink module
-    Module* blink = new Blink(pin, servo_freq, freq);
-    servoThread->registerModule(blink);
-}
-
-/***********************************************************************
-    MODULE CONFIGURATION AND CREATION FROM STATIC CONFIG - boardconfi.h   
-************************************************************************/
-
-void loadStaticBlink()
-{
-
+    Module* blink = new Blink(pin, PRU_SERVOFREQ, freq);
+    ServoThread::registerModule(blink);
 }
 
 /***********************************************************************

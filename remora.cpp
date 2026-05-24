@@ -44,7 +44,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "configuration.h"
 #include "remora.h"
-#include "boardconfig.h"
 
 #include "crc32.h"
 
@@ -53,7 +52,7 @@ extern "C"
 {
 #include "wizchip_conf.h"
 #include "socket.h"
-#include "w5x00_spi.h"
+#include "wizchip_spi.h"
 #include "w5x00_lwip.h"
 }
 
@@ -73,13 +72,8 @@ extern "C"
 // drivers
 #include "drivers/pin/pin.h"
 
-// interrupts
-#include "interrupt/irqHandlers.h"
-#include "interrupt/interrupt.h"
-
 // threads
 #include "thread/pruThread.h"
-#include "thread/createThreads.h"
 
 // modules
 #include "modules/module.h"
@@ -89,6 +83,7 @@ extern "C"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
 
+using namespace std;
 
 /***********************************************************************
 *                STRUCTURES AND GLOBAL VARIABLES                       *
@@ -106,23 +101,20 @@ enum State {
 };
 
 uint8_t resetCnt;
-uint32_t base_freq = PRU_BASEFREQ;
-uint32_t servo_freq = PRU_SERVOFREQ;
 
 // boolean
 volatile bool PRUreset;
 bool configError = false;
 bool threadsRunning = false;
-bool staticConfig = false;
 
 uint8_t noDataCount;
 
 // pointers to objects with global scope
-pruThread* servoThread;
-pruThread* baseThread;
 RemoraComms* comms;
 RxPingPongBuffer rxPingPongBuffer;
 TxPingPongBuffer txPingPongBuffer;
+
+Stepgen *stepgens[JOINTS] = {};
 
 // Json config file stuff
 const char defaultConfig[] = DEFAULT_CONFIG;
@@ -267,54 +259,29 @@ void moveJson()
 }
 
 
-void jsonFromFlash(std::string json)
+void jsonFromFlash()
 {
-    int c;
-    uint32_t i = 0;
-    uint32_t jsonLength;
-
     printf("\n1. Loading JSON configuration file from Flash memory\n");
 
     // read byte 0 to determine length to read
-    jsonLength = *(uint32_t*)(XIP_BASE + JSON_STORAGE_ADDRESS);
-
+    uint32_t jsonLength = *(uint32_t*)(XIP_BASE + JSON_STORAGE_ADDRESS);
     if (jsonLength == 0xFFFFFFFF)
     {
     	printf("Flash storage location is empty - no config file\n");
     	printf("Using default configuration\n\n");
-
-        //staticConfig = true;
-
-        jsonLength = sizeof(defaultConfig);
-
-    	json.resize(jsonLength);
-
-		for (i = 0; i < jsonLength; i++)
-		{
-			c = defaultConfig[i];
-			strJson.push_back(c);
-		}
+        strJson = defaultConfig;
     }
     else
     {
-		json.resize(jsonLength);
-
-		for (i = 0; i < jsonLength; i++)
-		{
-			c = *(uint8_t*)(XIP_BASE + JSON_STORAGE_ADDRESS + 4 + i);
-			strJson.push_back(c);
-		}
-		printf("\n%s\n\n", json.c_str());
-
-        staticConfig = false;
+        const char *p = (const char*)(XIP_BASE + JSON_STORAGE_ADDRESS + 4);
+        strJson = std::string(p, p+jsonLength);
     }
+    printf("\n%s\n\n", strJson.c_str());
 }
 
 
 void deserialiseJSON()
 {
-    if(staticConfig) return;
-
     printf("\n2. Parsing JSON configuration file\n");
 
     const char *json = strJson.c_str();
@@ -347,97 +314,13 @@ void deserialiseJSON()
 }
 
 
-void configThreads()
-{
-    if (configError) return;
-
-    printf("\n3. Configuring threads\n");
-
-    JsonArray Threads = doc["Threads"];
-
-    // create objects from JSON data
-    for (JsonArray::iterator it=Threads.begin(); it!=Threads.end(); ++it)
-    {
-        thread = *it;
-
-        const char* configor = thread["Thread"];
-        uint32_t    freq = thread["Frequency"];
-
-        if (!strcmp(configor,"Base"))
-        {
-            base_freq = freq;
-            printf("Setting BASE thread frequency to %d\n", base_freq);
-        }
-        else if (!strcmp(configor,"Servo"))
-        {
-            servo_freq = freq;
-            printf("Setting SERVO thread frequency to %d\n", servo_freq);
-        }
-    }
-}
-
-
-void loadStaticConfig()
-{
-    printf("\n4. Loading static configuration\n");
-
-    // Servo thread modules
-
-    //rxData_t* pruRxData = currentRxPacket;
-    //txData_t* pruTxData = currentTxPacket;
-
-    rxData_t* pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
-	txData_t* pruTxData = getCurrentTxBuffer(&txPingPongBuffer);
-    
-    // Ethernet communication monitoring
-	comms = new RemoraComms();
-	servoThread->registerModule(comms);
-
-    //loadStaticBlink();
-	for (int i = 0; i < sizeof(BlinkConfigs)/sizeof(*BlinkConfigs); i++) {
-        printf("\nMake Blink at pin %s\n", BlinkConfigs[i].Comment, BlinkConfigs[i].Pin, BlinkConfigs[i].Freq);
-        Module* blink = new Blink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
-        servoThread->registerModule(blink);
-    }
-
-    //loadStaticIO();
-    //Digital Outputs
-    for (int i = 0; i < sizeof(DOConfigs)/sizeof(*DOConfigs); i++) {
-        printf("\nCreate digital output for %s\n", DOConfigs[i].Comment);
-        Module* digitalOutput = new DigitalPin(1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalOutput);
-    }
-  
-    //Digital Inputs
-    for (int i = 0; i < sizeof(DIConfigs)/sizeof(*DIConfigs); i++) {
-        printf("\nCreate digital input for %s\n", DIConfigs[i].Comment);
-        Module* digitalInput = new DigitalPin(0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalInput);
-    }
-
-    // Base thread modules
-    //loadStaticStepgen();
-    for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
-        printf("\nCreate step generator for Joint %d\n", i);
-        //I don't think these next 3 lines do anything anymore.
-        //ptrJointFreqCmd[i] = &pruRxData->jointFreqCmd[i];
-        //ptrJointFeedback[i] = &pruTxData->jointFeedback[i];
-        //ptrJointEnable = &pruRxData->jointEnable;
- 
-        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT);
-        baseThread->registerModule(stepgen);
-        baseThread->registerModulePost(stepgen);
-    }
-}
-
-
 void loadModules()
 {
     printf("\n4. Loading modules\n");
 
 	// Ethernet communication monitoring
 	comms = new RemoraComms();
-	servoThread->registerModule(comms);
+	ServoThread::registerModule(comms);
 
     if (configError) return;
 
@@ -457,7 +340,8 @@ void loadModules()
 
             if (!strcmp(type,"Stepgen"))
             {
-                createStepgen();
+                int jointNumber = module["Joint Number"];
+                stepgens[jointNumber] = createStepgen();
             }
          }
         else if (!strcmp(thread,"Servo"))
@@ -485,10 +369,10 @@ void debugThreadHigh()
     printf("\n  Thread debugging.... \n\n");
 
     Module* debugOnB = new Debug("GP06", 1);
-    baseThread->registerModule(debugOnB);
+    BaseThread::registerModule(debugOnB);
 
     Module* debugOnS = new Debug("GP15", 1);
-    servoThread->registerModule(debugOnS);
+    ServoThread::registerModule(debugOnS);
 }
 
 
@@ -497,10 +381,10 @@ void debugThreadLow()
     printf("\n  Thread debugging.... \n\n");
 
     Module* debugOffB = new Debug("GP14", 0);
-    baseThread->registerModule(debugOffB);
+    BaseThread::registerModule(debugOffB);
 
     Module* debugOffS = new Debug("GP15", 0);
-    servoThread->registerModule(debugOffS);
+    ServoThread::registerModule(debugOffS);
 }
 
 void core1_entry()
@@ -526,19 +410,10 @@ void core1_entry()
                 }
                 prevState = currentState;
 
-                jsonFromFlash(strJson);
+                jsonFromFlash();
                 deserialiseJSON();
-                configThreads();
-                createThreads();
                 //debugThreadHigh();
-                if (staticConfig)
-                {
-                    loadStaticConfig();
-                }
-                else
-                {
-                    loadModules();
-                }
+                loadModules();
                 //debugThreadLow();
 
                 currentState = ST_START;
@@ -556,10 +431,10 @@ void core1_entry()
                 {
                     // Start the threads
                     printf("\nStarting the BASE thread\n");
-                    baseThread->startThread();
+                    BaseThread::start();
 
                     printf("\nStarting the SERVO thread\n");
-                    servoThread->startThread();
+                    ServoThread::start();
 
                     threadsRunning = true;
                 }
@@ -576,7 +451,7 @@ void core1_entry()
                 }
                 prevState = currentState;
                 //servo thread is run outside of interrupt context.
-                servoThread->run();                
+                ServoThread::run();                
 
                 //wait for data before changing to running state
                 
@@ -596,13 +471,13 @@ void core1_entry()
 
                 prevState = currentState;
                 //servo thread is run outside of interrupt context.
-                servoThread->run();
-                
+                ServoThread::run();
+
                 if (comms->getStatus() == false)
                 {
                     currentState = ST_RESET;
                 }
-                
+
                 break;
 
             case ST_STOP:
@@ -613,7 +488,7 @@ void core1_entry()
                 }
                 prevState = currentState;
                 //servo thread is run outside of interrupt context.
-                servoThread->run();              
+                ServoThread::run();
 
                 currentState = ST_STOP;
                 break;
@@ -868,36 +743,46 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
-            while (baseThread->semaphore);
-                baseThread->semaphore = true;
-            //don't need to wait for the servo thread.
 
             swapTxBuffers(&txPingPongBuffer);
 
-            baseThread->semaphore = false;            
-            
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_DATA;
             txlen = BUFFER_SIZE;
             comms->dataReceived();
+
+            for (int jointNumber = 0; jointNumber < JOINTS; ++jointNumber)
+            {
+                if (stepgens[jointNumber] != NULL)
+                {
+                    txBuffer->jointFeedback[jointNumber] = stepgens[jointNumber]->getRawCount();
+                }
+            }
         }
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-            while (baseThread->semaphore);
-                baseThread->semaphore = true;
             //don't need to wait for the servo thread.
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);
             //frequency command will now come from the new data
             swapRxBuffers(&rxPingPongBuffer);
-            baseThread->semaphore = false;               
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_ACKNOWLEDGE;
             txlen = BUFFER_SIZE;
             comms->dataReceived();
-        }	
+
+            for (int jointNumber = 0; jointNumber < JOINTS; ++jointNumber)
+            {
+                if (stepgens[jointNumber] != NULL)
+                {
+                    bool isEnabled = (rxBuffer->jointEnable & (1 << jointNumber)) != 0;
+                    int32_t frequencyCommand = rxBuffer->jointFreqCmd[jointNumber];
+                    stepgens[jointNumber]->setFrequency(frequencyCommand, isEnabled);
+                }
+            }
+        }
     }
    
 	// allocate pbuf from RAM

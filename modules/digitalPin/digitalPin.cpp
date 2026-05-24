@@ -19,6 +19,24 @@ void createDigitalPin()
     int mod;
     bool inv;
 
+    if (!strcmp(modifier,"Pull Up"))
+    {
+        mod = PULLUP;
+    }
+    else if (!strcmp(modifier,"Pull Down"))
+    {
+        mod = PULLDOWN;
+    }
+    else if (!strcmp(modifier,"Pull None"))
+    {
+        mod = PULLNONE;
+    }
+    else
+    {
+        printf("Invalid modifier '%s' at pin %s\n", modifier, pin);
+        mod = PULLNONE;
+    }
+
     if (!strcmp(invert,"True"))
     {
         inv = true;
@@ -33,27 +51,17 @@ void createDigitalPin()
     if (!strcmp(mode,"Output"))
     {
         Module* digitalPin = new DigitalPin(1, pin, dataBit, inv, mod);
-        servoThread->registerModule(digitalPin);
+        ServoThread::registerModule(digitalPin);
     }
     else if (!strcmp(mode,"Input"))
     {
         Module* digitalPin = new DigitalPin(0, pin, dataBit, inv, mod);
-        servoThread->registerModule(digitalPin);
+        ServoThread::registerModule(digitalPin);
     }
     else
     {
         printf("Error - incorrectly defined Digital Pin\n");
     }
-
-}
-
-
-/***********************************************************************
-    MODULE CONFIGURATION AND CREATION FROM STATIC CONFIG - boardconfi.h   
-************************************************************************/
-
-void loadStaticIO()
-{
 
 }
 

@@ -10,7 +10,6 @@
 
 
 void createBlink(void);
-void loadStaticBlink(void);
 
 class Blink : public Module
 {

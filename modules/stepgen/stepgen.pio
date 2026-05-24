@@ -1,0 +1,42 @@
+; PIO program for stepgen.
+;
+; FIFO entry layout (LSB-first via right shift + autopull):
+;   bits  0..29 : cycles to wait before next state transition (0..2^30-1 PIO cycles)
+;   bit      30 : step pin value
+;   bit      31 : direction pin value
+;
+; Pin configuration (set by the C-side constructor):
+;   side-set pin = step pin   (.side_set 1 opt)
+;   OUT pins     = dir pin    (sm_config_set_out_pins(..., dirPin, 1))
+;
+; Non-consecutive step/dir GPIOs are supported because side-set and OUT
+; target different physical pins.
+;
+; The wait comes first so that the new state can later be scheduled at a
+; precise cycle relative to upcoming events (window-of-inevitability work).
+;
+; Per-entry overhead: 6 PIO cycles.  Total entry duration = 6 + Y, where
+; Y is the wait field from the FIFO.  The C side compensates by passing
+; (cycles - 6) when it wants the new state asserted exactly `cycles`
+; PIO cycles after the previous one.
+
+.program stepgen
+.pio_version 0
+.side_set 1 opt
+.out 32 right auto
+.fifo tx
+
+.wrap_target
+start:
+    out y, 30                       ; cycles -> Y; pin state unchanged
+hold:
+    jmp y-- hold                    ; loop Y+1 times, pin state still unchanged
+
+    out x, 1                        ; step bit -> X
+    jmp !x step_low
+    out pins, 1     side 1          ; assert dir (from FIFO), step = 1
+    jmp start                       ; balance with step_low's nop
+step_low:
+    out pins, 1     side 0          ; assert dir (from FIFO), step = 0
+    nop                             ; balance: both paths take same cycles
+.wrap
