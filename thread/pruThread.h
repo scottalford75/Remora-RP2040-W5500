@@ -4,6 +4,7 @@
 #include "timer.h"
 
 // Standard Template Library (STL) includes
+#include <atomic>
 #include <vector>
 
 using namespace std;
@@ -28,8 +29,8 @@ class pruThread
 
 	public:
 
-		bool				semaphore;
-		bool				execute;
+		std::atomic<bool>	semaphore;
+		std::atomic<bool>	execute;
 
 		pruThread(uint8_t slice, uint32_t frequency);
 

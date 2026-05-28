@@ -25,8 +25,8 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 		gpio_set_dir(27, 1);
 	}	
 
-	this->semaphore = false;
-	this->execute = false;
+	this->semaphore.store(false, std::memory_order_relaxed);
+	this->execute.store(false, std::memory_order_relaxed);
 }
 
 void pruThread::startThread(void)
@@ -56,11 +56,11 @@ void pruThread::registerModulePost(Module* module)
 void pruThread::run(void)
 {
 
-	if(!this->execute)
-		return;	
-	
-	while (this->semaphore == true);	
-		this->semaphore = true;	
+	if (!this->execute.load(std::memory_order_acquire))
+		return;
+
+	while (this->semaphore.load(std::memory_order_acquire));
+	this->semaphore.store(true, std::memory_order_relaxed);
 	
 	if (this->slice == 0){
 		gpio_put(6, 1);
@@ -87,6 +87,6 @@ void pruThread::run(void)
 		gpio_put(27, 0);
 	}
 
-	this->execute = false;
-	this->semaphore = false;
+	this->execute.store(false, std::memory_order_relaxed);
+	this->semaphore.store(false, std::memory_order_release);
 }

@@ -868,13 +868,13 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
-            while (baseThread->semaphore);
-                baseThread->semaphore = true;
+            while (baseThread->semaphore.load(std::memory_order_acquire));
+            baseThread->semaphore.store(true, std::memory_order_relaxed);
             //don't need to wait for the servo thread.
 
             swapTxBuffers(&txPingPongBuffer);
 
-            baseThread->semaphore = false;            
+            baseThread->semaphore.store(false, std::memory_order_release);            
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_DATA;
@@ -884,14 +884,14 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-            while (baseThread->semaphore);
-                baseThread->semaphore = true;
+            while (baseThread->semaphore.load(std::memory_order_acquire));
+            baseThread->semaphore.store(true, std::memory_order_relaxed);
             //don't need to wait for the servo thread.
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);
             //frequency command will now come from the new data
             swapRxBuffers(&rxPingPongBuffer);
-            baseThread->semaphore = false;               
+            baseThread->semaphore.store(false, std::memory_order_release);               
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_ACKNOWLEDGE;
